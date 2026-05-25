@@ -1,0 +1,22 @@
+{
+    // 使用 IntelliSense 了解相关属性。 
+    // 悬停以查看现有属性的描述。
+    // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "cobol",
+            "request": "launch",
+            "name": "COBOL (native): Launch",
+            "program": "${workspaceFolder}/<insert-program-name-here>",
+            "cwd": "${workspaceFolder}",
+            "stopOnEntry": true
+        },
+        {
+            "type": "cobol",
+            "request": "attach",
+            "name": "COBOL (native): Attach to process",
+            "processId": "${command:pickProcess}"
+        }
+    ]
+}

@@ -1,0 +1,219 @@
+{
+  "id": "4255707",
+  "name": "机房动力环境监控大屏",
+  "font_family": "iconfont",
+  "css_prefix_text": "icon-",
+  "description": "",
+  "glyphs": [
+    {
+      "icon_id": "4765725",
+      "name": "close-circle",
+      "font_class": "close-circle",
+      "unicode": "e77d",
+      "unicode_decimal": 59261
+    },
+    {
+      "icon_id": "14301856",
+      "name": "水浸_浸水",
+      "font_class": "shuijin_jinshui",
+      "unicode": "e674",
+      "unicode_decimal": 58996
+    },
+    {
+      "icon_id": "3865221",
+      "name": "电池",
+      "font_class": "dianchi",
+      "unicode": "e610",
+      "unicode_decimal": 58896
+    },
+    {
+      "icon_id": "10135423",
+      "name": "有害垃圾-蓄电池",
+      "font_class": "youhailaji-xudianchi",
+      "unicode": "e63b",
+      "unicode_decimal": 58939
+    },
+    {
+      "icon_id": "11536339",
+      "name": "温度",
+      "font_class": "wendu",
+      "unicode": "e797",
+      "unicode_decimal": 59287
+    },
+    {
+      "icon_id": "12331657",
+      "name": "电压",
+      "font_class": "dianya",
+      "unicode": "e665",
+      "unicode_decimal": 58981
+    },
+    {
+      "icon_id": "12331688",
+      "name": "温度",
+      "font_class": "wendu1",
+      "unicode": "e66b",
+      "unicode_decimal": 58987
+    },
+    {
+      "icon_id": "14301847",
+      "name": "功率",
+      "font_class": "gongshuai",
+      "unicode": "e673",
+      "unicode_decimal": 58995
+    },
+    {
+      "icon_id": "17805320",
+      "name": "电压",
+      "font_class": "dianya1",
+      "unicode": "e621",
+      "unicode_decimal": 58913
+    },
+    {
+      "icon_id": "19985106",
+      "name": "电池-低电量",
+      "font_class": "dianchi-didianliang",
+      "unicode": "e7a7",
+      "unicode_decimal": 59303
+    },
+    {
+      "icon_id": "23036430",
+      "name": "功率",
+      "font_class": "gongshuai1",
+      "unicode": "e61d",
+      "unicode_decimal": 58909
+    },
+    {
+      "icon_id": "24277141",
+      "name": "功率",
+      "font_class": "gongshuai2",
+      "unicode": "e67b",
+      "unicode_decimal": 59003
+    },
+    {
+      "icon_id": "25716500",
+      "name": "电源电压",
+      "font_class": "dianyuandianya",
+      "unicode": "ea32",
+      "unicode_decimal": 59954
+    },
+    {
+      "icon_id": "31310775",
+      "name": "电压",
+      "font_class": "dianya2",
+      "unicode": "e60f",
+      "unicode_decimal": 58895
+    },
+    {
+      "icon_id": "35126243",
+      "name": "电压",
+      "font_class": "dianya3",
+      "unicode": "e6a6",
+      "unicode_decimal": 59046
+    },
+    {
+      "icon_id": "1104539",
+      "name": "其它类_灯光",
+      "font_class": "qitaleidengguang",
+      "unicode": "e9e2",
+      "unicode_decimal": 59874
+    },
+    {
+      "icon_id": "4237180",
+      "name": "摄像头",
+      "font_class": "shexiangtou",
+      "unicode": "e620",
+      "unicode_decimal": 58912
+    },
+    {
+      "icon_id": "4762919",
+      "name": "空调",
+      "font_class": "kongtiao",
+      "unicode": "e90d",
+      "unicode_decimal": 59661
+    },
+    {
+      "icon_id": "5218765",
+      "name": "监控",
+      "font_class": "jiankong",
+      "unicode": "e600",
+      "unicode_decimal": 58880
+    },
+    {
+      "icon_id": "5642865",
+      "name": "灯光",
+      "font_class": "dengguang",
+      "unicode": "e622",
+      "unicode_decimal": 58914
+    },
+    {
+      "icon_id": "6481085",
+      "name": "事故上报-选中",
+      "font_class": "shigushangbao-xuanzhong",
+      "unicode": "e640",
+      "unicode_decimal": 58944
+    },
+    {
+      "icon_id": "11806530",
+      "name": "温湿度",
+      "font_class": "wenshidu",
+      "unicode": "e66e",
+      "unicode_decimal": 58990
+    },
+    {
+      "icon_id": "12797477",
+      "name": "大屏设置",
+      "font_class": "dapingshezhi",
+      "unicode": "e7e2",
+      "unicode_decimal": 59362
+    },
+    {
+      "icon_id": "14151213",
+      "name": "烟感",
+      "font_class": "yangan",
+      "unicode": "e62e",
+      "unicode_decimal": 58926
+    },
+    {
+      "icon_id": "21428130",
+      "name": "温湿度",
+      "font_class": "wenshidu1",
+      "unicode": "e644",
+      "unicode_decimal": 58948
+    },
+    {
+      "icon_id": "25070632",
+      "name": "提醒",
+      "font_class": "tixing",
+      "unicode": "e9e9",
+      "unicode_decimal": 59881
+    },
+    {
+      "icon_id": "14915066",
+      "name": "温度设置",
+      "font_class": "wendushezhi2-05-05",
+      "unicode": "e634",
+      "unicode_decimal": 58932
+    },
+    {
+      "icon_id": "15010855",
+      "name": "温度设置",
+      "font_class": "00-wendushezhi-05",
+      "unicode": "e63d",
+      "unicode_decimal": 58941
+    },
+    {
+      "icon_id": "23719355",
+      "name": "湿度",
+      "font_class": "shidu1",
+      "unicode": "e642",
+      "unicode_decimal": 58946
+    },
+    {
+      "icon_id": "24277157",
+      "name": "湿度",
+      "font_class": "shidu2",
+      "unicode": "e67d",
+      "unicode_decimal": 59005
+    }
+  ]
+}
