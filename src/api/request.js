@@ -8,6 +8,20 @@ const service = axios.create({
 })
 
 let isRefreshing = true
+let hasNetworkError = false
+
+function notifyApiStatus(type, error) {
+    if (typeof window === 'undefined') return
+
+    window.dispatchEvent(new CustomEvent('api-status-change', {
+        detail: {
+            type,
+            status: error?.response?.status,
+            message: error?.response?.data?.message || error?.message || '',
+            url: error?.config?.url || ''
+        }
+    }))
+}
 
 // request interceptor
 service.interceptors.request.use(config => {
@@ -25,6 +39,10 @@ service.interceptors.request.use(config => {
 service.interceptors.response.use(
     // response => response,
     response => {
+        if (hasNetworkError) {
+            hasNetworkError = false
+            notifyApiStatus('recovered')
+        }
         const res = response.data
         return res;
     },
@@ -47,6 +65,11 @@ service.interceptors.response.use(
                     isRefreshing = true
                 })
             }
+        }
+        const isUnavailable = !error?.response || error.code === 'ECONNABORTED' || error.response?.status >= 500
+        if (isUnavailable) {
+            hasNetworkError = true
+            notifyApiStatus('error', error)
         }
         return Promise.reject(error)
     })
