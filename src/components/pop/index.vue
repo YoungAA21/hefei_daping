@@ -64,7 +64,7 @@
 import gsap from 'gsap'
 import NgImageViewer from "@/components/NgImage/NgImageViewer.vue";
 
-export default {
+export default { 
   components: { NgImageViewer },
   props: {
     lineData: {
@@ -109,13 +109,26 @@ export default {
     }
   },
   methods: {
+    getSafePosition(position = { top: 0, left: 0 }) {
+      const margin = 16;
+      const panelWidth = 285;
+      const panelHeight = Math.round(window.innerHeight * 0.4);
+      const maxLeft = Math.max(margin, window.innerWidth - panelWidth - margin);
+      const maxTop = Math.max(margin, window.innerHeight - panelHeight - margin);
+
+      return {
+        left: Math.min(Math.max(position.left || margin, margin), maxLeft),
+        top: Math.min(Math.max(position.top || margin, margin), maxTop)
+      };
+    },
+
     async getShow(e) {
       if (this.isAnimating) {
         await this.getHide();
       }
 
       this.title = e.title;
-      this.position = e.position || { top: 0, left: 0 };
+      this.position = this.getSafePosition(e.position);
 
       this.show = true;
       this.isAnimating = true;
