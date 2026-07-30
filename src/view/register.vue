@@ -78,6 +78,18 @@
 import { ElMessage } from 'element-plus'
 import { register } from '@/api/api/Auth'
 
+function getErrorMessage(error) {
+  const data = error?.response?.data
+  if (typeof data === 'string') return data
+  if (data?.message) return data.message
+  if (data?.title) return data.title
+  if (data?.errors) {
+    const firstError = Object.values(data.errors).flat()[0]
+    if (firstError) return firstError
+  }
+  return error?.message || '注册失败，请稍后重试'
+}
+
 export default {
   data() {
     return {
@@ -96,6 +108,14 @@ export default {
         ElMessage.warning('请输入用户名和密码')
         return
       }
+      if (this.form.username.length < 3) {
+        ElMessage.warning('用户名至少 3 位')
+        return
+      }
+      if (this.form.password.length < 6) {
+        ElMessage.warning('密码至少 6 位')
+        return
+      }
 
       this.loading = true
       try {
@@ -112,7 +132,7 @@ export default {
           ElMessage.error(res?.message || '注册失败')
         }
       } catch (error) {
-        ElMessage.error(error?.response?.data?.message || '注册失败，请稍后重试')
+        ElMessage.error(getErrorMessage(error))
       } finally {
         this.loading = false
       }

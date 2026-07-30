@@ -51,6 +51,20 @@
             <span>机台缺陷</span>
             <em>{{ totalCount }} 条</em>
           </div>
+          <div class="ng-filter-bar">
+            <label>
+              <span>品牌</span>
+              <select v-model="defaultBrand" :disabled="loading" @change="handleFilterChange">
+                <option v-for="brand in brandOptions" :key="brand" :value="brand">{{ brand }}</option>
+              </select>
+            </label>
+            <label>
+              <span>相机</span>
+              <select v-model="defaultCamera" :disabled="loading" @change="handleFilterChange">
+                <option v-for="camera in cameraOptions" :key="camera" :value="camera">{{ camera }}</option>
+              </select>
+            </label>
+          </div>
           <div class="ng-table-head">
             <span>时间</span>
             <span>缺陷</span>
@@ -137,6 +151,8 @@ export default {
       totalCount: 0,
       defaultBrand: '黄山(金皖烟)',
       defaultCamera: '0',
+      brandOptions: ['黄山(金皖烟)', '黄山(新制皖烟)'],
+      cameraOptions: ['0', '1', '2', '3'],
     }
   },
   computed: {
@@ -168,6 +184,21 @@ export default {
       if (!time) return '-';
       return String(time).replace('T', ' ').slice(0, 19);
     },
+    resolvePointQueryValue(pointName) {
+      const pointMap = {
+        '商标纸': 'sbz',
+        '卡纸': 'kz',
+        '前半条烟透明纸': 'qbtytmz',
+        '后半条烟透明纸': 'hbtytmz',
+        '内道透明纸': 'ndtmz',
+        '内岛透明纸': 'ndtmz',
+        '外道透明纸': 'wdtmz',
+        '内道商标纸': 'sbz',
+        '内岛商标纸': 'sbz'
+      };
+      const normalizedPoint = String(pointName || '').trim();
+      return pointMap[normalizedPoint] || normalizedPoint;
+    },
     selectImage(image) {
       this.selectedImage = image;
     },
@@ -186,9 +217,17 @@ export default {
       this.error = '';
       this.$emit('close');
     },
+    handleFilterChange() {
+      this.page = 1;
+      this.loadNgImages();
+    },
     async open() {
-      const line = this.normalizeLine(this.lineData?.line || '');
       this.show = true;
+      this.page = 1;
+      await this.loadNgImages();
+    },
+    async loadNgImages() {
+      const line = this.normalizeLine(this.lineData?.line || '');
       this.loading = true;
       this.error = '';
       this.images = [];
@@ -205,7 +244,7 @@ export default {
         const res = await getNgImageList({
           line,
           brand: this.defaultBrand,
-          point: this.pointName,
+          point: this.resolvePointQueryValue(this.pointName),
           camera: this.defaultCamera,
           page: this.page,
           pageSize: this.pageSize
@@ -593,6 +632,44 @@ export default {
   color: #ffcc66;
   font-style: normal;
   font-size: 13px;
+}
+
+.ng-filter-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 86px;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(101, 213, 255, 0.12);
+}
+
+.ng-filter-bar label {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ng-filter-bar label > span {
+  color: #9ea8c7;
+  font-size: 12px;
+}
+
+.ng-filter-bar select {
+  width: 100%;
+  height: 30px;
+  box-sizing: border-box;
+  border: 1px solid rgba(101, 213, 255, 0.28);
+  border-radius: 4px;
+  outline: none;
+  padding: 0 8px;
+  color: #eaf9ff;
+  background: rgba(3, 15, 32, 0.88);
+  font-size: 12px;
+}
+
+.ng-filter-bar select:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
 }
 
 .ng-table-head {
