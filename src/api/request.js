@@ -1,8 +1,7 @@
 import axios from 'axios'
-import {devIp} from '@/api/ipConfig'
 
 const service = axios.create({
-    // 开发环境不设置 baseURL，让代理处理
+    // 开发与部署均使用同源路径，由前端服务器代理到对应后端。
     baseURL: '',
     timeout: 100000,
 })
@@ -76,7 +75,7 @@ service.interceptors.response.use(
 
 // 刷新token请求
 function refreshToken() {
-    return axios.post(`${devIp}/api/blade-auth/oauth/token?tenantId=000000&username=DP001&password=efc3d451b28e58fdbffde31ec4c37b86&grant_type=password&scope=all&type=account`, null, {
+    return axios.post(`/api/blade-auth/oauth/token?tenantId=000000&username=DP001&password=efc3d451b28e58fdbffde31ec4c37b86&grant_type=password&scope=all&type=account`, null, {
         headers: {
             'Tenant-Id': '000000',
             'Authorization': 'Basic c2FiZXI6c2FiZXJfc2VjcmV0'

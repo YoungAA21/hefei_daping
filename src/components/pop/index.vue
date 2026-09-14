@@ -45,7 +45,7 @@
           <!-- 添加查看详情按钮 -->
           <div class="detail-button-section">
             <button class="detail-button" @click="goToDetail">
-              {{pointName===''? '查看详情':'查看检测状态'}}
+              {{pointName===''? '查看详情':'查看缺陷图片'}}
             </button>
           </div>
         </div>

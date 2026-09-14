@@ -1,10 +1,11 @@
 @echo off
 chcp 65001
-title Vue项目服务器 - 192.168.31.103:4173
+cd /d "%~dp0"
+title 检测监控大屏服务器 - 4173
 
 echo ====================================
 echo    Vue 项目自动部署脚本
-echo    服务器IP: 192.168.31.103
+echo    部署配置: .env.production（同机后端默认 127.0.0.1:7804）
 echo ====================================
 echo.
 
@@ -23,16 +24,17 @@ echo 2. 启动预览服务器...
 echo.
 echo ========== 访问地址 ==========
 echo  本地访问: http://localhost:4173
-echo  内网访问: http://192.168.31.103:4173
+echo  内网访问: 请使用下方 Network 显示的服务器内网地址
 echo ==============================
 echo.
 echo API代理配置:
-echo   /LineInfo -> http://localhost:7803
+echo   /LineInfo, /api, /ngimages
+echo   实际后端目标将在启动时显示；修改配置后请重启服务
 echo.
 echo 按 Ctrl+C 停止服务器
 echo ====================================
 echo.
 
-npx vite preview --host 0.0.0.0 --port 4173
+call npm run preview
 
 pause

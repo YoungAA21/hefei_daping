@@ -54,22 +54,7 @@
       </div>
     </div>
     <div class="data">
-      <div class="item1">
-        <item icon="icon-wenshidu" name="产线产量实时曲线图" :duration="0.5" :delay="0.5">
-          <item2 :lineData="list"></item2>
-        </item>
-      </div>
-      <div class="item1">
-        <item icon="icon-shigushangbao-xuanzhong" name="产线剔除数实时柱状图" :duration="0.5" :delay="1">
-          <item3 :lineData="list"></item3>
-        </item>
-      </div>
-      <!-- 在 home.vue 中修改 -->
-      <div class="item1">
-        <item name="产线状态监测" :duration="0.5" :delay="1">
-          <item7 :lineData="list"></item7>
-        </item>
-      </div>
+      <productionInsights :line-data="list" />
     </div>
     <pop ref="pop" :lineData="currentMachineData" @close="onPopClose"></pop>
   </div>
@@ -80,11 +65,7 @@ import {getlineInfo} from "@/api/api/LargeScreenData.js";
 import { logout } from "@/api/api/Auth.js";
 import { ElMessage } from 'element-plus'
 import top from "./components/top/index.vue";
-import item from "./components/item/index.vue";
-import items from "./components/items/index.vue";
-import item2 from "./components/item2/index.vue";
-import item3 from "./components/item3/index.vue";
-import item7 from "./components/item7/index.vue";
+import productionInsights from "./components/productionInsights/index.vue";
 import pop from "@/components/pop/index.vue";
 import overData from "./components/overData/overData.vue"
 
@@ -125,11 +106,7 @@ export default {
   },
   components: {
     top,
-    item,
-    items,
-    item2,
-    item3,
-    item7,
+    productionInsights,
     pop,
     overData
   },
@@ -475,10 +452,7 @@ export default {
 }
 .data{
   width: 100%;
-  height: 20vh;
-  display: grid;
-  grid-template-columns: 1fr 1fr 2fr;
-  gap: 10px;
+  height: 25vh;
   position: relative;
   z-index: 3;
   padding: 0 12px 10px;

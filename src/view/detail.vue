@@ -41,21 +41,7 @@
       </div>
     </div>
     <div class="data">
-      <div class="item1">
-        <item icon="icon-wenshidu" name="产线状态监测" :duration="0.5" :delay="0.5">
-          <item4 :lineData="filteredList"></item4>
-        </item>
-      </div>
-      <div class="item1">
-        <item icon="icon-shigushangbao-xuanzhong" name="监测点运行状态监测" :duration="0.5" :delay="1">
-          <item5 :lineData="filteredList"></item5>
-        </item>
-      </div>
-      <div class="item2s">
-        <items name="产线数据监测">
-          <item6 :lineData="filteredList"></item6>
-        </items>
-      </div>
+      <detailInsights :line-data="filteredList" :snapshot-at="snapshotAt" />
     </div>
     <pop ref="pop" :lineData="currentLineData" :point-name="currentPoint"></pop>
   </div>
@@ -64,11 +50,7 @@
 <script>
 import {getlineInfo} from "@/api/api/LargeScreenData.js";
 import top from "./components/top/index.vue";
-import item from "./components/item/index.vue";
-import items from "./components/items/index.vue";
-import item4 from "./components/item4/index.vue";
-import item5 from "./components/item5/index.vue";
-import item6 from "./components/item6/index.vue";
+import detailInsights from "./components/detailInsights/index.vue";
 // 导入图片
 import machineImg from "../assets/image/machine_detail.png";
 import pop from "@/components/pop/index.vue";
@@ -78,6 +60,8 @@ export default {
     return {
       list: [],
       filteredList: [],
+      snapshotAt: null,
+      isLineDataLoading: false,
       highlightTimer: null,
       dataInterval: null,
       currentPop: null,
@@ -93,13 +77,9 @@ export default {
   components: {
     pop,
     top,
-    item,
-    items,
-    item4,
-    item5,
-    item6,
+    detailInsights,
   },
-  beforeDestroy() {
+  beforeUnmount() {
     if (this.highlightTimer) {
       clearInterval(this.highlightTimer);
     }
@@ -143,6 +123,7 @@ export default {
         try {
           const lineData = JSON.parse(this.$route.query.lineData);
           this.receivedLineData = lineData;
+          this.filteredList = [lineData];
           this.currentLineData = lineData; // 初始化当前产线数据
 
           // 设置当前产线显示名称
@@ -207,11 +188,13 @@ export default {
     },
 
     async getLineData() {
+      if (this.isLineDataLoading) return;
+      this.isLineDataLoading = true;
       try {
         const data = {};
         const res = await getlineInfo(data);
         // 统一格式化数据
-        const formattedData = res.data.map(item => {
+        const formattedData = (Array.isArray(res?.data) ? res.data : []).map(item => {
           if (item.line && item.line.startsWith('高')) {
             const lineNumber = item.line.replace('高', '');
             return {
@@ -222,13 +205,13 @@ export default {
           return item;
         });
 
-        if (JSON.stringify(this.list) !== JSON.stringify(formattedData)) {
-          this.list = formattedData;
-          // 过滤数据，只保留当前产线
-          this.filteredList = this.filterLineData(formattedData);
-        }
+        this.list = formattedData;
+        this.filteredList = this.filterLineData(formattedData);
+        this.snapshotAt = Date.now();
       } catch (error) {
         console.error('获取产线数据失败:', error);
+      } finally {
+        this.isLineDataLoading = false;
       }
     },
 
@@ -311,7 +294,7 @@ export default {
   height: 100vh;
   position: relative;
   display: grid;
-  grid-template-rows: 100px minmax(0, 1fr) 24vh;
+  grid-template-rows: 100px minmax(0, 1fr) 25vh;
   background:
       radial-gradient(circle at 20% 18%, rgba(0, 226, 255, 0.2), transparent 28%),
       radial-gradient(circle at 80% 68%, rgba(255, 204, 102, 0.12), transparent 25%),
@@ -437,9 +420,7 @@ export default {
   width: 100%;
   height: 100%;
   min-height: 0;
-  display: grid;
-  grid-template-columns: 1fr 1fr 2fr;
-  gap: 10px;
+
   padding: 0 12px 14px;
   box-sizing: border-box;
   position: relative;

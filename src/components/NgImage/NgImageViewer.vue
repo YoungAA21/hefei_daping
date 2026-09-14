@@ -125,6 +125,7 @@
 
 <script>
 import { getNgImageList } from "@/api/api/LargeScreenData.js";
+import { resolveNgImageUrl } from "@/utils/ngImageUrl.js";
 
 export default {
   name: 'NgImageViewer',
@@ -249,7 +250,10 @@ export default {
           page: this.page,
           pageSize: this.pageSize
         });
-        const images = Array.isArray(res?.data) ? res.data : [];
+        const images = Array.isArray(res?.data) ? res.data.map(image => ({
+          ...image,
+          imageUrl: resolveNgImageUrl(image.imageUrl)
+        })) : [];
         this.images = images;
         this.totalCount = res?.totalCount || images.length;
         this.selectedImage = images[0] || null;
