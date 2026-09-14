@@ -9,7 +9,7 @@
   var flexible = lib.flexible || (lib.flexible = {})
 
   if (metaEl) {
-    console.warn('将根据已有的meta标签来设置缩放比例')
+    // 页面已有 viewport 标签时沿用其缩放比例。
     var match = metaEl.getAttribute('content').match(/initial\-scale=([\d\.]+)/)
     if (match) {
       scale = parseFloat(match[1])

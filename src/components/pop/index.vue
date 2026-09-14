@@ -79,9 +79,9 @@ export default {
   computed: {
     filteredPoints() {
       if (!this.pointName) {
-        return this.lineData.points || [];
+        return this.lineData?.points || [];
       }
-      return (this.lineData.points || []).filter(point =>
+      return (this.lineData?.points || []).filter(point =>
           point.point === this.pointName
       );
     }
@@ -94,6 +94,7 @@ export default {
       title: '',
       position: { top: 0, left: 0 },
       isAnimating: false,
+      animationVersion: 0,
     }
   },
   watch: {
@@ -107,6 +108,10 @@ export default {
       deep: true,
       immediate: true
     }
+  },
+  beforeUnmount() {
+    this.animationVersion++;
+    if (this.$refs.popWinMain) gsap.killTweensOf(this.$refs.popWinMain);
   },
   methods: {
     getSafePosition(position = { top: 0, left: 0 }) {
@@ -123,61 +128,58 @@ export default {
     },
 
     async getShow(e) {
-      if (this.isAnimating) {
-        await this.getHide();
-      }
-
+      const version = ++this.animationVersion;
+      const previous = this.$refs.popWinMain;
+      if (previous) gsap.killTweensOf(previous);
       this.title = e.title;
       this.position = this.getSafePosition(e.position);
-
       this.show = true;
+      this.showInner = false;
       this.isAnimating = true;
-
       await this.$nextTick();
-
-      gsap.set(this.$refs.popWinMain, {
-        height: '0px',
-        opacity: 0,
-        scale: 0.92,
-        rotationX: -8
-      });
-
-      return new Promise((resolve) => {
-        gsap.to(this.$refs.popWinMain, {
-          duration: 0.55,
-          height: '40vh', // 增加高度以适应新按钮
-          opacity: 1,
-          scale: 1,
-          rotationX: 0,
+      const panel = this.$refs.popWinMain;
+      if (version !== this.animationVersion || !panel) return;
+      gsap.set(panel, { height: '0px', opacity: 0, scale: 0.92, rotationX: -8 });
+      return new Promise(resolve => {
+        gsap.to(panel, {
+          duration: 0.55, height: '40vh', opacity: 1, scale: 1, rotationX: 0,
           ease: 'power3.out',
+          onInterrupt: resolve,
           onComplete: () => {
-            this.showInner = true;
-            this.isAnimating = false;
+            if (version === this.animationVersion) {
+              this.showInner = true;
+              this.isAnimating = false;
+            }
             resolve();
           }
         });
       });
     },
-
     getHide() {
-      return new Promise((resolve) => {
-        this.showInner = false;
-        this.isAnimating = true;
-        this.$nextTick(() => {
-          gsap.to(this.$refs.popWinMain, {
-            duration: 0.35,
-            height: '0px',
-            opacity: 0,
-            scale: 0.94,
-            rotationX: -6,
-            ease: 'power2.in',
-            onComplete: () => {
+      const version = ++this.animationVersion;
+      const panel = this.$refs.popWinMain;
+      this.showInner = false;
+      if (!panel) {
+        this.show = false;
+        this.isAnimating = false;
+        this.$emit('close');
+        return Promise.resolve();
+      }
+      gsap.killTweensOf(panel);
+      this.isAnimating = true;
+      return new Promise(resolve => {
+        gsap.to(panel, {
+          duration: 0.35, height: '0px', opacity: 0, scale: 0.94, rotationX: -6,
+          ease: 'power2.in',
+          onInterrupt: resolve,
+          onComplete: () => {
+            if (version === this.animationVersion) {
               this.show = false;
               this.isAnimating = false;
               this.$emit('close');
-              resolve();
             }
-          });
+            resolve();
+          }
         });
       });
     },

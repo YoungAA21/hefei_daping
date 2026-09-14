@@ -1,7 +1,6 @@
 <template>
   <div class="container">
     <div class="screen-grid"></div>
-    <div class="screen-scan"></div>
     <div class="screen-ring ring-left"></div>
     <div class="screen-ring ring-right"></div>
     <div class="top">
@@ -150,6 +149,7 @@ export default {
       const machineData = this.list.find(item => this.normalizeLine(item.line) === machine.des);
       if (!machineData) {
         this.closePop();
+        ElMessage.warning(this.list.length ? `${machine.name}暂无数据，暂时无法查看详情` : '尚未获取到产线数据，请检查后端连接后重试');
         return;
       }
 
@@ -348,17 +348,6 @@ export default {
   mask-image: linear-gradient(to bottom, transparent 0%, #000 16%, #000 82%, transparent 100%);
   z-index: 0;
 }
-.screen-scan {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: -20%;
-  height: 20vh;
-  pointer-events: none;
-  z-index: 1;
-  background: linear-gradient(180deg, transparent, rgba(101, 213, 255, 0.12), transparent);
-  animation: screenScan 6s ease-in-out infinite;
-}
 .screen-ring {
   position: absolute;
   border-radius: 50%;
@@ -548,10 +537,12 @@ export default {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: -20px;
   width: 80%;
   height: 100%;
   position: relative;
+  // 整组统一收拢并上移，保留九台产线的相对排列及透视关系。
+  transform: translateY(-3vh) scale(0.94);
+  transform-origin: center;
   transform-style: preserve-3d;
   pointer-events: none;
 }
@@ -841,19 +832,6 @@ export default {
   align-items: center;
   gap: 8px;
   transform-origin: center;
-}
-
-@keyframes screenScan {
-  0%, 100% {
-    transform: translateY(0);
-    opacity: 0;
-  }
-  18%, 72% {
-    opacity: 1;
-  }
-  50% {
-    transform: translateY(125vh);
-  }
 }
 
 @keyframes rotateRing {

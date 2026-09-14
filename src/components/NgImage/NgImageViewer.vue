@@ -1,134 +1,62 @@
 <template>
-  <div class="ng-mask" v-if="show" @click.self="close">
-    <div class="ng-panel">
-      <div class="ng-grid"></div>
-      <div class="ng-header">
-        <div>
-          <span>NG IMAGE</span>
-          <p>{{ pointName }} 缺陷图片</p>
-        </div>
-        <button class="ng-close" @click="close">×</button>
+  <Teleport to="body">
+    <Transition name="workbench">
+      <div v-if="show" ref="dialog" class="ng-mask" tabindex="-1" role="dialog" aria-modal="true" :aria-label="`${pointName}缺陷图片工作台`" @keydown="handleKeys" @click.self="close">
+        <section class="ng-panel">
+          <header class="ng-header">
+            <div class="header-emblem"><span>NG</span></div>
+            <div><span class="eyebrow">缺陷影像中心</span><h2>{{ pointName }}<span>缺陷图片工作台</span></h2></div>
+            <div class="header-context"><span class="status-dot"></span>{{ currentLineName }}产线 <i>/</i> CAMERA {{ defaultCamera }}</div>
+            <button class="icon-button" aria-label="关闭缺陷图片" @click="close">×</button>
+          </header>
+          <div class="ng-body">
+            <aside class="analysis-column">
+              <div class="section-label"><span>01 / 产线概览</span></div>
+              <div class="line-id"><span>当前产线</span><strong>{{ currentLineName || '—' }}<small>LINE</small></strong></div>
+              <div class="metric"><span>累计产量 <small>件</small></span><strong>{{ number(lineProduction) }}</strong><div class="metric-rule"></div></div>
+              <div class="metric amber"><span>累计剔除 <small>件</small></span><strong>{{ number(lineRejectCount) }}</strong><div class="metric-rule"></div></div>
+              <div class="ng-rate"><span>累计 NG 率</span><strong>{{ ngRateText }}</strong></div>
+              <div class="distribution-heading">本页缺陷分布 <span>{{ distribution.length }} 类</span></div>
+              <div class="distribution-ring"><div class="ring-orbit"></div><div class="ring-fill" :style="ringStyle"></div><div class="ring-center"><strong>{{ images.length }}</strong><span>本页图片</span></div></div>
+              <div class="distribution-list"><button v-for="item in distribution" :key="item.name" class="distribution-item" :class="{ chosen: defectFilter === item.name }" :style="{'--color':item.color}" @click="filterDefect(item.name)"><span><i></i>{{ item.name }}<b>{{ item.count }}</b></span><div class="bar-track"><i :style="{width:`${item.percent}%`}"></i></div></button><span v-if="!images.length" class="muted">暂无可统计的图片</span></div>
+            </aside>
+            <main class="inspection-column">
+              <div class="section-label"><span>02 / 图像检视</span></div>
+              <div class="preview-heading"><div><h3 :title="selectedImage?.name">{{ selectedImage?.name || '暂无选中图片' }}</h3></div><span class="defect-tag" v-if="selectedImage">{{ selectedImage.defect || '其他' }}</span></div>
+              <div v-if="loading" class="loading-stage"><div class="loading-orbit"></div><strong>正在调取缺陷影像</strong><span>读取所选品牌与相机的图片记录</span></div>
+              <div v-else-if="error && !images.length" class="empty-stage"><span>◇</span><strong>{{ error }}</strong><button class="action-button" @click="loadNgImages">重新加载</button></div>
+              <NgImageSurface v-else :src="selectedImage?.imageUrl" :name="selectedImage?.name" />
+              <div class="preview-navigation"><button class="text-button" :disabled="selectedIndex <= 0" @click="moveSelection(-1)">← 上一张</button><span><b>{{ selectedIndex < 0 ? '—' : String(selectedIndex + 1).padStart(2,'0') }}</b> / {{ visibleImages.length }}</span><button class="text-button" :disabled="selectedIndex < 0 || selectedIndex >= visibleImages.length-1" @click="moveSelection(1)">下一张 →</button><button class="action-button" :disabled="!selectedImage?.imageUrl" @click="openImagePreview(selectedImage)">⛶ 放大检视</button></div>
+              <div class="image-metadata"><div><span>采集时间</span><strong>{{ formatTime(selectedImage?.createTime) }}</strong></div><div><span>产品品牌</span><strong>{{ selectedImage?.brand || defaultBrand }}</strong></div><div><span>检测相机</span><strong>CAM {{ selectedImage?.camera ?? defaultCamera }}</strong></div></div>
+              <div class="inspection-note"><i></i>原始缺陷影像<span>缩放后可滚动查看图像细节</span></div>
+            </main>
+            <aside class="catalog-column">
+              <div class="section-label"><span>03 / 缺陷档案</span><em>{{ number(totalCount) }} 条</em></div>
+              <div class="ng-filter-bar"><label><span>产品品牌</span><select v-model="defaultBrand" :disabled="loading" @change="handleFilterChange"><option v-for="brand in brandOptions" :key="brand" :value="brand">{{ brand }}</option></select></label><label><span>检测相机</span><select v-model="defaultCamera" :disabled="loading" @change="handleFilterChange"><option v-for="camera in cameraOptions" :key="camera" :value="camera">CAM {{ camera }}</option></select></label><button aria-label="刷新缺陷列表" :disabled="loading" @click="loadNgImages">↻</button></div>
+              <div class="catalog-summary"><span>{{ defectFilter || '全部缺陷' }} · 本页 {{ visibleImages.length }} 张</span><button v-if="defectFilter" @click="filterDefect(defectFilter)">清除筛选 ×</button><span v-else>按采集时间倒序</span></div>
+              <div class="ng-list">
+                <div v-if="loading" class="skeleton-list"><div v-for="n in 6" :key="n" class="skeleton-row"></div></div>
+                <template v-else><button v-for="(image,index) in visibleImages" :key="`${page}-${image.imageUrl}-${index}`" class="ng-row" :class="{active:selectedImage === image}" :style="{'--delay':`${Math.min(index,8)*35}ms`}" :aria-pressed="selectedImage === image" @click="selectImage(image)"><div class="thumbnail"><img v-if="image.imageUrl" :src="image.imageUrl" :alt="image.name" loading="lazy" @error="$event.target.style.display='none'"/><span>NG</span></div><div class="row-content"><div><strong>{{ image.defect || '其他' }}</strong><em>{{ String(index+1).padStart(2,'0') }}</em></div><time>{{ formatTime(image.createTime) }}</time><span :title="image.name">{{ image.name }}</span></div><span class="row-arrow">›</span></button><div v-if="!visibleImages.length" class="catalog-empty">{{ error || '当前筛选暂无图片' }}</div></template>
+              </div>
+              <div class="pagination"><button :disabled="loading || page <= 1" @click="changePage(-1)">上一页</button><span>{{ page }} <i>/ {{ pageCount }}</i></span><button :disabled="loading || page >= pageCount" @click="changePage(1)">下一页</button></div>
+            </aside>
+          </div>
+          <footer class="ng-footer"><span><i></i>缺陷影像追溯 · {{ currentLineName }} / {{ pointName }}</span><span>ESC 关闭窗口</span></footer>
+        </section>
+        <Transition name="zoom"><div v-if="zoomImage" class="ng-zoom-mask" role="dialog" aria-modal="true" aria-label="缺陷图片放大检视" @click.self="closeImagePreview"><section class="ng-zoom-panel"><header><div><span class="eyebrow">IMAGE DETAIL</span><h3>{{ zoomImage.defect || '其他' }} · 原图检视</h3></div><button class="icon-button" aria-label="关闭放大检视" @click="closeImagePreview">×</button></header><NgImageSurface :src="zoomImage.imageUrl" :name="zoomImage.name" enlarged/><footer><span>{{ zoomImage.name }}</span><span>{{ zoomImage.line || currentLineName }} · {{ zoomImage.brand || defaultBrand }} · CAM {{ zoomImage.camera ?? defaultCamera }} · {{ formatTime(zoomImage.createTime) }}</span></footer></section></div></Transition>
       </div>
-
-      <div class="ng-body">
-        <div class="ng-line-panel">
-          <span class="ng-panel-label">LINE INFO</span>
-          <strong class="ng-line-name">{{ currentLineName }}</strong>
-          <div class="ng-stat-list">
-            <div class="ng-stat">
-              <span>产量</span>
-              <strong>{{ lineProduction }}</strong>
-            </div>
-            <div class="ng-stat">
-              <span>剔除数</span>
-              <strong class="danger">{{ lineRejectCount }}</strong>
-            </div>
-            <div class="ng-stat">
-              <span>NG率</span>
-              <strong class="warning">{{ ngRateText }}</strong>
-            </div>
-          </div>
-        </div>
-
-        <div class="ng-preview">
-          <div class="ng-preview-title">
-            <span>{{ selectedImage?.name || '暂无图片' }}</span>
-            <em>{{ selectedImage?.defect || '未知缺陷' }}</em>
-          </div>
-          <div class="ng-preview-box">
-            <img v-if="selectedImage?.imageUrl" :src="selectedImage.imageUrl" :alt="selectedImage.name">
-            <div v-else class="ng-empty">{{ loading ? '图片加载中...' : error || '暂无NG图片' }}</div>
-          </div>
-          <div class="ng-meta" v-if="selectedImage">
-            <span>产线：{{ selectedImage.line }}</span>
-            <span>品牌：{{ selectedImage.brand }}</span>
-            <span>相机：{{ selectedImage.camera }}</span>
-          </div>
-        </div>
-
-        <div class="ng-list-panel">
-          <div class="ng-list-title">
-            <span>机台缺陷</span>
-            <em>{{ totalCount }} 条</em>
-          </div>
-          <div class="ng-filter-bar">
-            <label>
-              <span>品牌</span>
-              <select v-model="defaultBrand" :disabled="loading" @change="handleFilterChange">
-                <option v-for="brand in brandOptions" :key="brand" :value="brand">{{ brand }}</option>
-              </select>
-            </label>
-            <label>
-              <span>相机</span>
-              <select v-model="defaultCamera" :disabled="loading" @change="handleFilterChange">
-                <option v-for="camera in cameraOptions" :key="camera" :value="camera">{{ camera }}</option>
-              </select>
-            </label>
-          </div>
-          <div class="ng-table-head">
-            <span>时间</span>
-            <span>缺陷</span>
-            <span>操作</span>
-          </div>
-          <div class="ng-list" v-loading="loading">
-            <div
-                v-for="image in images"
-                :key="image.imageUrl || image.name"
-                class="ng-row"
-                :class="{ active: selectedImage && selectedImage.imageUrl === image.imageUrl }"
-                @click="selectImage(image)"
-            >
-              <span>{{ formatTime(image.createTime) }}</span>
-              <span>{{ image.defect || '其他' }}</span>
-              <button title="放大预览" @click.stop="openImagePreview(image)">◎</button>
-            </div>
-            <div class="ng-empty-row" v-if="!loading && images.length === 0">
-              {{ error || '暂无缺陷图片' }}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="ng-zoom-mask" v-if="zoomImage" @click.self="closeImagePreview">
-      <div class="ng-zoom-panel">
-        <button class="ng-close ng-zoom-close" @click="closeImagePreview">×</button>
-        <div class="ng-zoom-image">
-          <img :src="zoomImage.imageUrl" :alt="zoomImage.name">
-        </div>
-        <div class="ng-zoom-info">
-          <span>IMAGE DETAIL</span>
-          <p>{{ zoomImage.name }}</p>
-          <div class="ng-info-list">
-            <div>
-              <em>产线名称</em>
-              <strong>{{ zoomImage.line || currentLineName }}</strong>
-            </div>
-            <div>
-              <em>时间</em>
-              <strong>{{ formatTime(zoomImage.createTime) }}</strong>
-            </div>
-            <div>
-              <em>缺陷名称</em>
-              <strong>{{ zoomImage.defect || '其他' }}</strong>
-            </div>
-            <div>
-              <em>牌号</em>
-              <strong>{{ zoomImage.brand || defaultBrand }}</strong>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+    </Transition>
+  </Teleport>
 </template>
 
 <script>
 import { getNgImageList } from "@/api/api/LargeScreenData.js";
+import NgImageSurface from './NgImageSurface.vue';
 import { resolveNgImageUrl } from "@/utils/ngImageUrl.js";
 
 export default {
   name: 'NgImageViewer',
+  components: { NgImageSurface },
   props: {
     lineData: {
       type: Object,
@@ -148,7 +76,9 @@ export default {
       zoomImage: null,
       error: '',
       page: 1,
-      pageSize: 100,
+      pageSize: 24,
+      defectFilter: '',
+      requestVersion: 0,
       totalCount: 0,
       defaultBrand: '黄山(金皖烟)',
       defaultCamera: '0',
@@ -157,6 +87,20 @@ export default {
     }
   },
   computed: {
+    distribution() {
+      const counts = new Map();
+      this.images.forEach(image => { const name = image.defect || '其他'; counts.set(name, (counts.get(name) || 0) + 1); });
+      const colors = ['#65e6ff', '#ffcc66', '#ff9275', '#8c9bff', '#63d9b4'];
+      return [...counts].sort((a,b) => b[1]-a[1]).map(([name,count],index) => ({name,count,color:colors[index%colors.length],percent:this.images.length ? count/this.images.length*100 : 0}));
+    },
+    ringStyle() {
+      if (!this.images.length) return {background:'#17364a'};
+      let offset = 0;
+      return {background:`conic-gradient(${this.distribution.map(item => {const start = offset; offset += item.percent; return `${item.color} ${start}% ${offset}%`;}).join(',')})`};
+    },
+    visibleImages() { return this.images.filter(image => !this.defectFilter || (image.defect || '其他') === this.defectFilter); },
+    selectedIndex() { return this.visibleImages.indexOf(this.selectedImage); },
+    pageCount() { return Math.max(1, Math.ceil(this.totalCount / this.pageSize)); },
     currentLineName() {
       return this.normalizeLine(this.lineData?.line || this.selectedImage?.line || '');
     },
@@ -169,11 +113,27 @@ export default {
     ngRateText() {
       const production = Number(this.lineProduction) || 0;
       const rejectCount = Number(this.lineRejectCount) || 0;
-      if (!production) return '0%';
+      if (!production || rejectCount < 0 || rejectCount > production) return '—';
       return `${((rejectCount / production) * 100).toFixed(3)}%`;
     }
   },
+  beforeUnmount() { this.requestVersion++; },
   methods: {
+    number(value) { const number = Number(value); return value === null || value === undefined || !Number.isFinite(number) ? '—' : number.toLocaleString('zh-CN'); },
+    filterDefect(name) { this.defectFilter = this.defectFilter === name ? '' : name; this.selectedImage = this.visibleImages[0] || null; },
+    moveSelection(step) { const image = this.visibleImages[this.selectedIndex + step]; if (image) this.selectImage(image); },
+    changePage(step) { const next = this.page + step; if (this.loading || next < 1 || next > this.pageCount) return; this.page = next; this.loadNgImages(); },
+    handleKeys(event) {
+      if (event.key === 'Escape') { event.stopPropagation(); this.zoomImage ? this.closeImagePreview() : this.close(); }
+      if (event.key === 'Tab') {
+        const container = this.$refs.dialog?.querySelector(this.zoomImage ? '.ng-zoom-panel' : '.ng-panel');
+        const controls = [...(container?.querySelectorAll('button:not(:disabled), select:not(:disabled), [tabindex="0"]') || [])].filter(element => element.getClientRects().length);
+        const first = controls[0], last = controls[controls.length - 1];
+        if (!first) { event.preventDefault(); return; }
+        if (event.shiftKey && (document.activeElement === first || !container.contains(document.activeElement))) { event.preventDefault(); last.focus(); }
+        else if (!event.shiftKey && (document.activeElement === last || !container.contains(document.activeElement))) { event.preventDefault(); first.focus(); }
+      }
+    },
     normalizeLine(line) {
       if (!line) return '';
       if (line.startsWith('gao')) {
@@ -206,11 +166,15 @@ export default {
     openImagePreview(image) {
       this.selectedImage = image;
       this.zoomImage = image;
+      this.$nextTick(() => this.$refs.dialog?.querySelector('.ng-zoom-panel .icon-button')?.focus());
     },
     closeImagePreview() {
       this.zoomImage = null;
+      this.$nextTick(() => this.$refs.dialog?.querySelector('.preview-navigation .action-button')?.focus());
     },
     close() {
+      this.requestVersion++;
+      this.loading = false;
       this.show = false;
       this.images = [];
       this.selectedImage = null;
@@ -219,15 +183,21 @@ export default {
       this.$emit('close');
     },
     handleFilterChange() {
+      this.totalCount = 0;
       this.page = 1;
       this.loadNgImages();
     },
     async open() {
       this.show = true;
+      this.totalCount = 0;
       this.page = 1;
+      await this.$nextTick();
+      this.$refs.dialog?.focus();
       await this.loadNgImages();
     },
     async loadNgImages() {
+      const version = ++this.requestVersion;
+      this.defectFilter = '';
       const line = this.normalizeLine(this.lineData?.line || '');
       this.loading = true;
       this.error = '';
@@ -250,608 +220,26 @@ export default {
           page: this.page,
           pageSize: this.pageSize
         });
+        if (version !== this.requestVersion) return;
         const images = Array.isArray(res?.data) ? res.data.map(image => ({
           ...image,
           imageUrl: resolveNgImageUrl(image.imageUrl)
         })) : [];
         this.images = images;
-        this.totalCount = res?.totalCount || images.length;
+        this.totalCount = Number.isFinite(Number(res?.totalCount)) ? Math.max(0, Number(res.totalCount)) : images.length;
         this.selectedImage = images[0] || null;
         if (!images.length) {
           this.error = '暂无NG图片';
         }
       } catch (error) {
+        if (version !== this.requestVersion) return;
         console.error('获取NG图片失败:', error);
         this.error = '获取NG图片失败';
       } finally {
-        this.loading = false;
+        if (version === this.requestVersion) this.loading = false;
       }
     }
   }
 }
 </script>
-
-<style lang="scss" scoped>
-.ng-mask {
-  position: fixed;
-  inset: 0;
-  z-index: 220;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background:
-      radial-gradient(circle at 35% 42%, rgba(0, 194, 255, 0.13), transparent 36%),
-      rgba(0, 0, 0, 0.62);
-  backdrop-filter: blur(3px);
-}
-
-.ng-panel {
-  width: 92vw;
-  height: 82vh;
-  position: relative;
-  overflow: hidden;
-  border: 1px solid rgba(101, 213, 255, 0.42);
-  border-radius: 8px;
-  background:
-      radial-gradient(circle at 16% 0%, rgba(101, 213, 255, 0.16), transparent 36%),
-      linear-gradient(145deg, rgba(5, 22, 43, 0.96), rgba(2, 8, 20, 0.98));
-  box-shadow:
-      0 28px 82px rgba(0, 0, 0, 0.58),
-      0 0 42px rgba(0, 194, 255, 0.22),
-      inset 0 0 38px rgba(0, 194, 255, 0.08);
-}
-
-.ng-grid {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background-image:
-      linear-gradient(rgba(101, 213, 255, 0.055) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(101, 213, 255, 0.055) 1px, transparent 1px);
-  background-size: 28px 28px;
-  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.8), transparent 92%);
-}
-
-.ng-header {
-  position: relative;
-  z-index: 1;
-  height: 74px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 22px 0 28px;
-  border-bottom: 1px solid rgba(101, 213, 255, 0.22);
-  background: linear-gradient(90deg, rgba(0, 149, 251, 0.14), transparent);
-}
-
-.ng-header span {
-  display: block;
-  margin-bottom: 3px;
-  color: #ffcc66;
-  font-family: DIN-Bold;
-  font-size: 11px;
-  letter-spacing: 2px;
-}
-
-.ng-header p {
-  margin: 0;
-  color: #eaf9ff;
-  font-size: 22px;
-  font-family: AlibabaPuHuiTiB;
-  letter-spacing: 2px;
-  text-shadow: 0 0 14px rgba(101, 213, 255, 0.45);
-}
-
-.ng-close {
-  width: 32px;
-  height: 32px;
-  border: 1px solid rgba(101, 213, 255, 0.38);
-  border-radius: 4px;
-  background: rgba(0, 149, 251, 0.12);
-  color: #65d5ff;
-  font-size: 22px;
-  line-height: 28px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.ng-close:hover {
-  color: #fff;
-  border-color: rgba(255, 204, 102, 0.72);
-  box-shadow: 0 0 18px rgba(255, 204, 102, 0.2);
-}
-
-.ng-body {
-  position: relative;
-  z-index: 1;
-  height: calc(100% - 74px);
-  display: grid;
-  grid-template-columns: 250px minmax(0, 1fr) 340px;
-  gap: 18px;
-  padding: 18px;
-  box-sizing: border-box;
-}
-
-.ng-line-panel,
-.ng-preview,
-.ng-list-panel {
-  min-height: 0;
-  border: 1px solid rgba(101, 213, 255, 0.22);
-  border-radius: 6px;
-  background:
-      linear-gradient(180deg, rgba(0, 149, 251, 0.08), rgba(2, 18, 45, 0.58)),
-      radial-gradient(circle at 50% 0%, rgba(101, 213, 255, 0.1), transparent 66%);
-  box-shadow: inset 0 0 22px rgba(0, 183, 255, 0.07);
-}
-
-.ng-line-panel {
-  position: relative;
-  padding: 20px 18px;
-  box-sizing: border-box;
-  overflow: hidden;
-  background:
-      radial-gradient(circle at 50% 0%, rgba(101, 213, 255, 0.24), transparent 34%),
-      linear-gradient(180deg, rgba(0, 149, 251, 0.1), rgba(2, 18, 45, 0.68));
-}
-
-.ng-line-panel::before {
-  content: '';
-  position: absolute;
-  left: 16px;
-  right: 16px;
-  top: 56px;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(101, 213, 255, 0.9), rgba(255, 204, 102, 0.8), transparent);
-  box-shadow: 0 0 18px rgba(101, 213, 255, 0.42);
-}
-
-.ng-line-panel::after {
-  content: '';
-  position: absolute;
-  width: 170px;
-  height: 170px;
-  right: -78px;
-  top: -72px;
-  border: 1px solid rgba(101, 213, 255, 0.18);
-  border-radius: 50%;
-  box-shadow:
-      0 0 28px rgba(101, 213, 255, 0.08),
-      inset 0 0 24px rgba(101, 213, 255, 0.08);
-  pointer-events: none;
-}
-
-.ng-panel-label {
-  position: relative;
-  z-index: 1;
-  width: max-content;
-  display: block;
-  margin-bottom: 22px;
-  padding: 5px 10px;
-  border: 1px solid rgba(101, 213, 255, 0.32);
-  border-radius: 3px;
-  background: rgba(0, 149, 251, 0.1);
-  color: #ffcc66;
-  font-family: DIN-Bold;
-  font-size: 12px;
-  letter-spacing: 2px;
-  box-shadow: inset 0 0 12px rgba(101, 213, 255, 0.08);
-}
-
-.ng-line-name {
-  position: relative;
-  z-index: 1;
-  display: block;
-  margin-bottom: 22px;
-  color: #eaf9ff;
-  font-family: AlibabaPuHuiTiB;
-  font-size: 38px;
-  line-height: 44px;
-  letter-spacing: 2px;
-  text-shadow:
-      0 0 14px rgba(101, 213, 255, 0.58),
-      0 0 28px rgba(101, 213, 255, 0.28);
-  word-break: break-all;
-}
-
-.ng-stat-list {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.ng-stat {
-  position: relative;
-  min-height: 86px;
-  padding: 13px 14px 12px 18px;
-  box-sizing: border-box;
-  overflow: hidden;
-  border: 1px solid rgba(101, 213, 255, 0.24);
-  border-radius: 6px;
-  background:
-      linear-gradient(90deg, rgba(2, 18, 45, 0.9), rgba(0, 67, 157, 0.34)),
-      radial-gradient(circle at 100% 0%, rgba(101, 213, 255, 0.2), transparent 64%);
-  box-shadow:
-      inset 0 0 18px rgba(0, 183, 255, 0.08),
-      0 0 18px rgba(0, 183, 255, 0.08);
-}
-
-.ng-stat::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 13px;
-  bottom: 13px;
-  width: 3px;
-  background: linear-gradient(180deg, transparent, #65d5ff, transparent);
-  box-shadow: 0 0 14px rgba(101, 213, 255, 0.9);
-}
-
-.ng-stat::after {
-  content: '';
-  position: absolute;
-  right: -28px;
-  top: 10px;
-  width: 82px;
-  height: 82px;
-  border: 1px dashed rgba(101, 213, 255, 0.16);
-  border-radius: 50%;
-  pointer-events: none;
-}
-
-.ng-stat:nth-child(2)::before {
-  background: linear-gradient(180deg, transparent, #ff8585, transparent);
-  box-shadow: 0 0 14px rgba(255, 133, 133, 0.7);
-}
-
-.ng-stat:nth-child(3)::before {
-  background: linear-gradient(180deg, transparent, #ffcc66, transparent);
-  box-shadow: 0 0 14px rgba(255, 204, 102, 0.7);
-}
-
-.ng-stat span {
-  position: relative;
-  z-index: 1;
-  display: block;
-  margin-bottom: 6px;
-  color: #9ddff3;
-  font-size: 12px;
-  letter-spacing: 2px;
-}
-
-.ng-stat strong {
-  position: relative;
-  z-index: 1;
-  display: block;
-  color: #65d5ff;
-  font-family: DIN-Bold;
-  font-size: 36px;
-  line-height: 42px;
-  text-shadow: 0 0 18px rgba(101, 213, 255, 0.36);
-  word-break: break-all;
-}
-
-.ng-stat strong.danger {
-  color: #ff8585;
-  text-shadow: 0 0 18px rgba(255, 133, 133, 0.32);
-}
-
-.ng-stat strong.warning {
-  color: #ffcc66;
-  text-shadow: 0 0 18px rgba(255, 204, 102, 0.36);
-}
-
-.ng-preview {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.ng-preview-title {
-  height: 46px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  padding: 0 16px;
-  border-bottom: 1px solid rgba(101, 213, 255, 0.16);
-  color: #eaf9ff;
-}
-
-.ng-preview-title span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 14px;
-}
-
-.ng-preview-title em {
-  flex-shrink: 0;
-  font-style: normal;
-  color: #ffcc66;
-}
-
-.ng-preview-box {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  background: rgba(0, 0, 0, 0.24);
-}
-
-.ng-preview-box img {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-  border: 1px solid rgba(101, 213, 255, 0.2);
-  box-shadow: 0 0 26px rgba(0, 0, 0, 0.34);
-}
-
-.ng-empty,
-.ng-empty-row {
-  color: #9ea8c7;
-  font-size: 14px;
-}
-
-.ng-meta {
-  height: 42px;
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  padding: 0 16px;
-  color: #bdefff;
-  border-top: 1px solid rgba(101, 213, 255, 0.16);
-  font-size: 13px;
-}
-
-.ng-list-panel {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.ng-list-title,
-.ng-table-head,
-.ng-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1.4fr) 78px 54px;
-  align-items: center;
-}
-
-.ng-list-title {
-  height: 48px;
-  padding: 0 14px;
-  border-bottom: 1px solid rgba(101, 213, 255, 0.18);
-  color: #eaf9ff;
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.ng-list-title em {
-  grid-column: 2 / 4;
-  justify-self: end;
-  color: #ffcc66;
-  font-style: normal;
-  font-size: 13px;
-}
-
-.ng-filter-bar {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 86px;
-  gap: 10px;
-  padding: 10px 12px;
-  border-bottom: 1px solid rgba(101, 213, 255, 0.12);
-}
-
-.ng-filter-bar label {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.ng-filter-bar label > span {
-  color: #9ea8c7;
-  font-size: 12px;
-}
-
-.ng-filter-bar select {
-  width: 100%;
-  height: 30px;
-  box-sizing: border-box;
-  border: 1px solid rgba(101, 213, 255, 0.28);
-  border-radius: 4px;
-  outline: none;
-  padding: 0 8px;
-  color: #eaf9ff;
-  background: rgba(3, 15, 32, 0.88);
-  font-size: 12px;
-}
-
-.ng-filter-bar select:disabled {
-  cursor: not-allowed;
-  opacity: 0.65;
-}
-
-.ng-table-head {
-  height: 34px;
-  padding: 0 12px;
-  color: #9ea8c7;
-  font-size: 12px;
-  border-bottom: 1px solid rgba(101, 213, 255, 0.12);
-}
-
-.ng-list {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  scrollbar-width: none;
-}
-
-.ng-list::-webkit-scrollbar {
-  display: none;
-}
-
-.ng-row {
-  height: 38px;
-  padding: 0 12px;
-  color: #c8d8ee;
-  font-size: 12px;
-  border-bottom: 1px solid rgba(101, 213, 255, 0.08);
-  cursor: pointer;
-  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.ng-row span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.ng-row:hover,
-.ng-row.active {
-  color: #fff;
-  background: linear-gradient(90deg, rgba(0, 149, 251, 0.2), rgba(2, 18, 45, 0.18));
-  box-shadow: inset 3px 0 0 #65d5ff;
-}
-
-.ng-row button {
-  width: 24px;
-  height: 24px;
-  justify-self: center;
-  border: 1px solid rgba(101, 213, 255, 0.36);
-  border-radius: 4px;
-  background: rgba(0, 149, 251, 0.16);
-  color: #65d5ff;
-  cursor: pointer;
-}
-
-.ng-row button:hover {
-  color: #06101f;
-  background: #65d5ff;
-}
-
-.ng-empty-row {
-  padding: 28px 12px;
-  text-align: center;
-}
-
-.ng-zoom-mask {
-  position: fixed;
-  inset: 0;
-  z-index: 240;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.72);
-  backdrop-filter: blur(5px);
-}
-
-.ng-zoom-panel {
-  width: 88vw;
-  height: 78vh;
-  position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 340px;
-  gap: 18px;
-  padding: 18px;
-  box-sizing: border-box;
-  border: 1px solid rgba(101, 213, 255, 0.48);
-  border-radius: 8px;
-  background:
-      radial-gradient(circle at 20% 0%, rgba(101, 213, 255, 0.16), transparent 34%),
-      linear-gradient(145deg, rgba(5, 22, 43, 0.98), rgba(2, 8, 20, 0.99));
-  box-shadow:
-      0 28px 82px rgba(0, 0, 0, 0.62),
-      0 0 46px rgba(0, 194, 255, 0.26),
-      inset 0 0 40px rgba(0, 194, 255, 0.08);
-}
-
-.ng-zoom-close {
-  position: absolute;
-  right: 14px;
-  top: 14px;
-  z-index: 2;
-}
-
-.ng-zoom-image,
-.ng-zoom-info {
-  min-height: 0;
-  border: 1px solid rgba(101, 213, 255, 0.22);
-  border-radius: 6px;
-  background:
-      linear-gradient(180deg, rgba(0, 149, 251, 0.08), rgba(2, 18, 45, 0.58)),
-      radial-gradient(circle at 50% 0%, rgba(101, 213, 255, 0.1), transparent 66%);
-}
-
-.ng-zoom-image {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 18px;
-  overflow: hidden;
-}
-
-.ng-zoom-image img {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-  border: 1px solid rgba(101, 213, 255, 0.22);
-  box-shadow: 0 0 34px rgba(0, 0, 0, 0.38);
-}
-
-.ng-zoom-info {
-  padding: 26px 20px;
-  box-sizing: border-box;
-  overflow: hidden;
-}
-
-.ng-zoom-info > span {
-  display: block;
-  margin-bottom: 8px;
-  color: #ffcc66;
-  font-family: DIN-Bold;
-  font-size: 12px;
-  letter-spacing: 2px;
-}
-
-.ng-zoom-info > p {
-  margin: 0 0 24px;
-  color: #eaf9ff;
-  font-size: 18px;
-  line-height: 26px;
-  word-break: break-all;
-}
-
-.ng-info-list {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.ng-info-list div {
-  padding: 14px;
-  border: 1px solid rgba(101, 213, 255, 0.18);
-  border-radius: 6px;
-  background: rgba(2, 18, 45, 0.58);
-}
-
-.ng-info-list em {
-  display: block;
-  margin-bottom: 6px;
-  color: #9ea8c7;
-  font-style: normal;
-  font-size: 12px;
-}
-
-.ng-info-list strong {
-  display: block;
-  color: #fff;
-  font-size: 16px;
-  line-height: 22px;
-  word-break: break-all;
-}
-</style>
+<style scoped lang="scss" src="./ng-workbench.scss"></style>

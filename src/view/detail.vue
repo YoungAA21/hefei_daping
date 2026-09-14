@@ -1,7 +1,6 @@
 <template>
   <div class="container">
     <div class="screen-grid"></div>
-    <div class="screen-scan"></div>
     <div class="screen-ring ring-left"></div>
     <div class="screen-ring ring-right"></div>
     <div class="top">
@@ -27,7 +26,7 @@
               `bubble-${index + 1}`,
               { 'bubble-active': activeBubble === index + 1 }
             ]"
-            @click="showPop(point.point)"
+            @click="showPop(point.point, $event)"
             :style="getBubblePosition(index)"
         >
           <div class="bubble-content">
@@ -216,10 +215,11 @@ export default {
     },
 
     // 点击产线显示pop
-    async showPop(pointName) {
+    async showPop(pointName, event) {
       this.currentPoint = pointName;
       // 获取位置信息
-      const machineElement = event.currentTarget;
+      const machineElement = event?.currentTarget;
+      if (!machineElement) return;
       const rect = machineElement.getBoundingClientRect();
       // 直接显示新的 pop，不需要延迟
       this.$refs.pop.getShow({
@@ -321,17 +321,6 @@ export default {
   background-size: 46px 46px;
   mask-image: linear-gradient(to bottom, transparent 0%, #000 16%, #000 82%, transparent 100%);
   z-index: 0;
-}
-.screen-scan {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: -20%;
-  height: 20vh;
-  pointer-events: none;
-  z-index: 1;
-  background: linear-gradient(180deg, transparent, rgba(101, 213, 255, 0.12), transparent);
-  animation: screenScan 6s ease-in-out infinite;
 }
 .screen-ring {
   position: absolute;
@@ -805,19 +794,6 @@ export default {
 .item2s {
   height: 100%;
   min-height: 0;
-}
-
-@keyframes screenScan {
-  0%, 100% {
-    transform: translateY(0);
-    opacity: 0;
-  }
-  18%, 72% {
-    opacity: 1;
-  }
-  50% {
-    transform: translateY(125vh);
-  }
 }
 
 @keyframes rotateRing {
