@@ -1,8 +1,8 @@
 <template>
   <div class="image-surface" :class="{ enlarged }">
-    <div v-if="!src || failed" class="image-message"><span class="image-symbol">◇</span><strong>{{ failed ? '图片加载失败' : '等待选择图片' }}</strong><span>{{ failed ? '请检查图片文件或服务连接' : '从右侧列表选择一条缺陷记录' }}</span><button v-if="failed" @click="retry">重新加载</button></div>
+    <div v-if="!src || failed" class="image-message"><span class="image-symbol">◇</span><strong>{{ failed ? '图片加载失败' : emptyText }}</strong><span>{{ failed ? '请检查图片文件或服务连接' : emptyHint }}</span><button v-if="failed" @click="retry">重新加载</button></div>
     <template v-else>
-      <div v-if="loading" class="image-message"><span class="loader"></span><strong>正在加载原图</strong></div>
+      <div v-if="loading" class="image-message"><span class="loader"></span><strong>正在加载图片</strong></div>
       <div class="image-scroll" :style="{ opacity: loading ? 0 : 1 }">
         <div class="image-size" :style="{ width: `${scale * 100}%`, height: `${scale * 100}%` }"><img :key="revision" :src="src" :alt="name" @load="loaded" @error="failed = true; loading = false" /></div>
       </div>
@@ -12,7 +12,7 @@
 </template>
 <script setup>
 import { ref, watch } from 'vue';
-const props = defineProps({ src: String, name: String, enlarged: Boolean });
+const props = defineProps({ src: String, name: String, enlarged: Boolean, emptyText: { type: String, default: '等待选择图片' }, emptyHint: { type: String, default: '从右侧列表选择一条缺陷记录' } });
 const loading = ref(true), failed = ref(false), scale = ref(1), revision = ref(0), dimensions = ref('');
 watch(() => props.src, () => { loading.value = true; failed.value = false; scale.value = 1; dimensions.value = ''; });
 function loaded(event) { loading.value = false; dimensions.value = `${event.target.naturalWidth} × ${event.target.naturalHeight}`; }

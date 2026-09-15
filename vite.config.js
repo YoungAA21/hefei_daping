@@ -18,12 +18,12 @@ export default defineConfig(({ mode }) => {
     if (!['http:', 'https:'].includes(backendUrl.protocol) || backendUrl.pathname !== '/' || backendUrl.search || backendUrl.hash || backendUrl.username || backendUrl.password) {
         throw new Error('BACKEND_URL 只能包含 http(s)://主机:端口，不要添加接口路径或账号密码')
     }
-    const proxy = Object.fromEntries(['/LineInfo', '/api', '/ngimages'].map(path => [path, {
+    const proxy = Object.fromEntries(['/LineInfo', '/api', '/ngimages', '/detectedimages'].map(path => [path, {
         target: backendUrl.origin,
         changeOrigin: true
     }]))
     const logTarget = server => {
-        server.config.logger.info(`[${mode}] /LineInfo、/api、/ngimages -> ${backendUrl.origin}`)
+        server.config.logger.info(`[${mode}] /LineInfo、/api、/ngimages、/detectedimages -> ${backendUrl.origin}`)
     }
     return {
         plugins: [vue(), {

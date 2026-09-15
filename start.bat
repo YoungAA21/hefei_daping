@@ -28,7 +28,7 @@ echo  内网访问: 请使用下方 Network 显示的服务器内网地址
 echo ==============================
 echo.
 echo API代理配置:
-echo   /LineInfo, /api, /ngimages
+echo   /LineInfo, /api, /ngimages, /detectedimages
 echo   实际后端目标将在启动时显示；修改配置后请重启服务
 echo.
 echo 按 Ctrl+C 停止服务器

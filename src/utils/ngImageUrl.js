@@ -6,7 +6,7 @@ export function resolveNgImageUrl(value) {
   try {
     const url = new URL(source, 'http://ng-image.local/');
     if (!['http:', 'https:'].includes(url.protocol)) return '';
-    if (url.pathname.startsWith('/ngimages/')) {
+    if (['/ngimages/', '/detectedimages/'].some(prefix => url.pathname.startsWith(prefix))) {
       return `${url.pathname}${url.search}${url.hash}`;
     }
     // Do not rewrite unrelated asset services or external image paths.

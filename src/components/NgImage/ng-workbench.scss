@@ -24,3 +24,12 @@
 @media(max-height:800px){.ng-panel{height:94vh}.ng-header{height:62PX}.section-label{height:33PX;min-height:33PX}.preview-heading{min-height:57PX}.image-metadata{padding:10PX 0}.distribution-ring{width:94PX;height:94PX;min-height:94PX}.line-id{margin-top:9PX;margin-bottom:6PX}.line-id>strong{font-size:24PX}.metric{margin-top:5PX;margin-bottom:5PX}.ng-rate{margin-top:4PX;margin-bottom:10PX;padding:8PX}.distribution-list{gap:6PX}.scope-note{margin-top:9PX}.ng-footer{height:26PX}}
 @media(max-width:1050px){.ng-body{grid-template-columns:155PX minmax(0,1fr) 250PX}.header-context{display:none}.ng-header>.icon-button{margin-left:auto}.ng-filter-bar{grid-template-columns:minmax(0,1fr) 72PX;gap:6PX}.ng-filter-bar>button{display:none}.section-label em{display:none}.thumbnail{width:40PX}.preview-navigation{flex-wrap:wrap;height:auto;min-height:65PX;padding:6PX 0}.image-metadata{grid-template-columns:1fr 1fr}.image-metadata>div:last-child{display:none}}
 @media(prefers-reduced-motion:reduce){.ng-mask *,.ng-mask *::before,.ng-mask *::after{animation:none!important;transition:none!important}}
+/* 新接口支持同一张图片返回多种缺陷，名称允许换行。 */
+.preview-heading{flex-wrap:wrap;padding:9PX 0;gap:6PX}
+.preview-heading>div{flex:1;min-width:120PX}
+.preview-heading .defect-tag{max-width:100%;white-space:normal;overflow:visible;line-height:1.5;overflow-wrap:anywhere}
+.distribution-item>span{line-height:1.5;overflow-wrap:anywhere;gap:4PX}
+.distribution-item b,.distribution-item>span i{flex-shrink:0}
+.row-content strong{white-space:normal;overflow-wrap:anywhere;line-height:1.4}
+.ng-zoom-panel>header>div{min-width:0;max-height:100%;overflow:auto;padding:6PX 0}
+.ng-zoom-panel h3{overflow-wrap:anywhere;font-size:15PX}
