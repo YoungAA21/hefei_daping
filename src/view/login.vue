@@ -12,8 +12,8 @@
           <span></span>
         </div>
         <div>
-          <h1>检测监控大屏</h1>
-          <p>Industrial Monitoring System</p>
+          <h1>AI 智能检测中台</h1>
+          <p>Intelligent Vision Platform</p>
         </div>
       </div>
 

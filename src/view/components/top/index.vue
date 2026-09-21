@@ -42,7 +42,7 @@ export default {
     // 每秒更新一次时间
     this.interval = setInterval(this.updateTime, 1000)
   },
-  beforeDestroy() {
+  beforeUnmount() {
     // 清除定时器，防止内存泄漏
     clearInterval(this.interval)
   },

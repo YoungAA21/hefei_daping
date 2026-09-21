@@ -9,8 +9,9 @@ module.exports = {
             "propList": [
                 "*"
             ],// 需要做转化处理的属性，如`hight`、`width`、`margin`等，`*`表示全部
-            exclude: ['node_modules']
+            // The original full-screen scene uses rem scaling; workspace forms
+            // and tables use responsive pixel layouts and independent scrolling.
+            exclude: /node_modules|[\\/]src[\\/]workspace[\\/]/
         }
     }
 }
-
