@@ -68,7 +68,8 @@
               ...new Set(
                 records
                   .filter((i) => !type || i.type === type)
-                  .map((i) => i.subtype),
+                  .map((i) => i.subtype)
+                  .filter(Boolean),
               ),
             ]"
             :key="t"
@@ -94,37 +95,27 @@
           @retry="load"
         />
         <div v-if="!loading && !error" class="defect-gallery">
+          <div class="atlas-floor" aria-hidden="true"></div>
           <article
-            v-for="(item, index) in visible"
+            v-for="item in visible"
             :key="item.uid"
             class="defect-card"
-            :style="{ '--card-index': index }"
-            @pointermove="tiltCard"
-            @pointerleave="resetCard"
           >
             <div class="hologram-scene">
-              <span class="holo-beam"></span>
-              <span class="orbit orbit-one"></span>
-              <span class="orbit orbit-two"></span>
-              <span class="orbit orbit-three"></span>
-              <button class="defect-visual" @click="preview = item" :aria-label="'查看' + item.name">
-                <img
-                  v-if="assetUrl(item.imagepath)"
-                  :src="assetUrl(item.imagepath)"
-                  alt="缺陷样例"
-                  @error="imageError"
-                /><span v-else class="visual-placeholder">◇</span>
-                <span class="scan-line"></span>
-                <span class="visual-corner corner-tl"></span><span class="visual-corner corner-br"></span>
-                <em>{{ linked ? "LABEL" : "STANDARD" }}</em>
-              </button>
-              <div class="card-platform" aria-hidden="true">
-                <i></i><i></i><i></i><i></i>
-              </div>
+              <div class="projection-beam" aria-hidden="true"></div>
+              <div class="orbital orbital-outer" aria-hidden="true"></div>
+              <div class="orbital orbital-inner" aria-hidden="true"></div>
+              <div class="projection-base" aria-hidden="true"><i></i><i></i><i></i><b></b></div>
+            <button class="defect-visual" @click="preview = item" :aria-label="'查看' + item.name + '完整图片'">
+              <img v-if="assetUrl(item.imagepath) && !failedImages[item.imagepath]" :src="assetUrl(item.imagepath)" :alt="item.name + '缺陷样例'" loading="lazy" @error="failedImages[item.imagepath] = true" />
+              <span v-else class="visual-placeholder"><b>◇</b>{{ failedImages[item.imagepath] ? '图片加载失败' : '暂无样例图片' }}</span>
+              <span class="preview-hint">查看完整图片 ↗</span>
+            </button>
+              <span class="hologram-caption">{{ item.name }}</span>
             </div>
             <div class="defect-card-body">
               <div class="defect-card-title"><strong>{{ item.name }}</strong><span>{{ item.level || "—" }}</span></div>
-              <small class="defect-code">{{ item.uid }} · {{ item.type }} / {{ item.subtype }}</small>
+              <small class="defect-code">{{ item.uid }} · {{ categoryText(item) }}</small>
               <p>{{ linked ? labelName(item.label) : (item.description || "已建立标准检测规则") }}</p>
               <div class="defect-card-actions">
                 <button class="text-button" @click="preview = item">查看详情</button>
@@ -134,7 +125,7 @@
             </div>
           </article>
         </div>
-        <Pager :total="filtered.length" :page="page" :disabled="loading" @change="page = $event" />
+        <Pager :total="filtered.length" :page="page" :size="9" :disabled="loading" @change="page = $event" />
       </section>
       <aside>
         <section class="ws-panel">
@@ -199,7 +190,7 @@
       "
       :busy="busy"
       @close="editing = false"
-      ><form class="ws-form" @submit.prevent="save">
+      ><form class="ws-form defect-editor-form" @submit.prevent="save">
         <template v-if="linked"
           ><label v-if="!draft.uid"
             >标签名称<input
@@ -235,15 +226,18 @@
                 required
                 maxlength="150" /></label
             ><label
-              >产品类别<input
-                v-model.trim="draft.type"
-                required
-                list="defect-types"
-              /><datalist id="defect-types">
+              >产品类别<select v-model="draft.type" required :disabled="existing">
                 <option>小盒</option>
                 <option>条盒</option>
-              </datalist></label
-            ><label>子类别<input v-model.trim="draft.subtype" required /></label
+                <option>箱装</option>
+              </select></label
+            ><label
+              >子类别<select v-model="draft.subtype" :disabled="existing">
+                <option value="">无子类别</option>
+                <option v-for="option in subtypeOptions" :key="option" :value="option">
+                  {{ option }}
+                </option>
+              </select></label
             ><label
               >质量等级<select v-model="draft.level">
                 <option>A</option>
@@ -284,7 +278,7 @@
         />
         <p>{{ preview.description || "暂无描述" }}</p>
         <small
-          >{{ preview.uid }} · {{ preview.type }} / {{ preview.subtype }} ·
+          >{{ preview.uid }} · {{ categoryText(preview) }} ·
           {{ preview.level }}</small
         >
       </div></WorkspaceModal
@@ -302,6 +296,7 @@ import ResourceState from "./components/ResourceState.vue";
 import Pager from "./components/Pager.vue";
 import WorkspaceModal from "./components/WorkspaceModal.vue";
 const linked = useRoute().name === "workspace-labels",
+  failedImages = reactive({}),
   records = ref([]),
   labels = ref([]),
   query = ref(""),
@@ -327,11 +322,30 @@ const filtered = computed(() =>
         .includes(query.value.toLowerCase()),
   ),
 );
+const subtypeOptions = computed(() => {
+  const values = [
+    ...new Set(
+      records.value
+        .filter((item) => item.type === draft.type && item.subtype)
+        .map((item) => item.subtype),
+    ),
+  ];
+  if (draft.type === "小盒" && !values.includes("小盒外形"))
+    values.unshift("小盒外形");
+  return values;
+});
 const visible = computed(() =>
-  filtered.value.slice((page.value - 1) * 20, page.value * 20),
+  filtered.value.slice((page.value - 1) * 9, page.value * 9),
 );
 watch([query, type, subtype], () => (page.value = 1));
 watch(type, () => (subtype.value = ""));
+watch(
+  () => draft.type,
+  () => {
+    if (draft.subtype && !subtypeOptions.value.includes(draft.subtype))
+      draft.subtype = subtypeOptions.value[0] || "";
+  },
+);
 function load() {
   return run(
     () =>
@@ -342,11 +356,44 @@ function load() {
         linked ? api("/api/MarkDefects/markdefectslabel") : [],
       ]),
     ([a, b]) => {
-      records.value = Array.isArray(a) ? a : [];
+      records.value = Array.isArray(a)
+        ? a
+            .map((item) => {
+              const type = String(item.type || "").replace(/\s+/g, "").trim();
+              return {
+                ...item,
+                type: type.includes("小盒框架纸")
+                  ? "小盒框架纸"
+                  : type.includes("小盒")
+                    ? "小盒"
+                    : type,
+                subtype: String(item.subtype || "").replace(/\s+/g, "").trim(),
+              };
+            })
+            .filter((item) => item.type !== "小盒框架纸")
+            .map((item) =>
+              item.type === "条盒" && item.subtype === "箱装"
+                ? { ...item, type: "箱装", subtype: "" }
+                : item,
+            )
+            .filter((item, index, list) => {
+              const key = item.uid
+                ? `uid:${item.uid}`
+                : `value:${item.name}|${item.type}|${item.subtype}|${item.level}|${item.description}|${item.imagepath}`;
+              return (
+                list.findIndex((candidate) => {
+                  const candidateKey = candidate.uid
+                    ? `uid:${candidate.uid}`
+                    : `value:${candidate.name}|${candidate.type}|${candidate.subtype}|${candidate.level}|${candidate.description}|${candidate.imagepath}`;
+                  return candidateKey === key;
+                }) === index
+              );
+            })
+        : [];
       labels.value = Array.isArray(b) ? b : [];
       page.value = Math.min(
         page.value,
-        Math.max(1, Math.ceil(filtered.value.length / 20)),
+        Math.max(1, Math.ceil(filtered.value.length / 9)),
       );
     },
   );
@@ -359,6 +406,9 @@ function labelName(value) {
 function labelInUse(index) {
   return records.value.some((i) => Number(i.label) === index);
 }
+function categoryText(item) {
+  return item?.subtype ? `${item.type} / ${item.subtype}` : item?.type || "—";
+}
 function openAdd() {
   Object.keys(draft).forEach((k) => delete draft[k]);
   Object.assign(draft, {
@@ -366,7 +416,7 @@ function openAdd() {
     name: "",
     description: "",
     type: "小盒",
-    subtype: "小盒商标纸",
+    subtype: "小盒外形",
     level: "A",
     imagepath: "",
     labelname: "",
@@ -477,254 +527,69 @@ function imageError(event) {
   event.target.style.visibility = "hidden";
   event.target.parentElement.setAttribute("title", "图片未能加载");
 }
-function tiltCard(event) {
-  const card = event.currentTarget;
-  const rect = card.getBoundingClientRect();
-  const x = (event.clientX - rect.left) / rect.width - 0.5;
-  const y = (event.clientY - rect.top) / rect.height - 0.5;
-  card.style.setProperty("--card-rotate-x", `${-y * 9}deg`);
-  card.style.setProperty("--card-rotate-y", `${x * 11}deg`);
-  card.style.setProperty("--card-glow-x", `${(x + 0.5) * 100}%`);
-  card.style.setProperty("--card-glow-y", `${(y + 0.5) * 100}%`);
-}
-function resetCard(event) {
-  const card = event.currentTarget;
-  card.style.setProperty("--card-rotate-x", "0deg");
-  card.style.setProperty("--card-rotate-y", "0deg");
-  card.style.setProperty("--card-glow-x", "50%");
-  card.style.setProperty("--card-glow-y", "35%");
-}
 onMounted(load);
 </script>
 <style scoped>
-.defect-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 300px;
-  gap: 18px;
-  align-items: start;
-}
-.defect-gallery-panel { min-width: 0; }
-.defect-gallery-panel > .ws-panel-heading { align-items: center; }
-.live-signal {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 5px 9px;
-  border: 1px solid rgba(92, 224, 216, .25);
-  border-radius: 999px;
-  color: #74d8d0;
-  font: 9px monospace;
-  letter-spacing: 1px;
-}
-.live-signal i {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #69e4d4;
-  box-shadow: 0 0 10px #69e4d4;
-  animation: live-pulse 1.6s ease-in-out infinite;
-}
-.defect-gallery {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 24px 16px;
-  padding: 8px 2px 12px;
-  perspective: 1500px;
-  perspective-origin: center top;
-}
-.defect-card {
-  position: relative;
-  min-width: 0;
-  min-height: 346px;
-  padding-top: 4px;
-  overflow: visible;
-  transform: rotateX(var(--card-rotate-x, 0deg)) rotateY(var(--card-rotate-y, 0deg)) translateZ(0);
-  transform-style: preserve-3d;
-  transform-origin: center 58%;
-  will-change: transform;
-  animation: defect-rise .46s both cubic-bezier(.2,.8,.2,1);
-  animation-delay: calc(var(--card-index) * 35ms);
-  transition: transform .18s ease-out, filter .25s ease;
-}
-.defect-card::before {
-  content: "";
-  position: absolute;
-  left: 7%;
-  right: 7%;
-  top: 52px;
-  height: 220px;
-  z-index: -1;
-  pointer-events: none;
-  border-radius: 50%;
-  background: radial-gradient(circle at var(--card-glow-x, 50%) var(--card-glow-y, 38%), rgba(79, 236, 226, .24), rgba(32, 145, 176, .08) 36%, transparent 70%);
-  filter: blur(3px);
-  opacity: .7;
-  transition: opacity .25s ease, transform .25s ease;
-}
-.defect-card:hover {
-  transform: rotateX(var(--card-rotate-x, 0deg)) rotateY(var(--card-rotate-y, 0deg)) translateZ(24px) translateY(-5px);
-  filter: drop-shadow(0 22px 22px rgba(0, 0, 0, .34)) drop-shadow(0 0 18px rgba(44, 211, 207, .2));
-}
-.defect-card:hover::before { opacity: 1; transform: scale(1.08); }
-.hologram-scene {
-  position: relative;
-  height: 222px;
-  transform-style: preserve-3d;
-  isolation: isolate;
-}
-.holo-beam {
-  position: absolute;
-  left: 24%;
-  right: 24%;
-  top: 60px;
-  height: 118px;
-  z-index: 0;
-  clip-path: polygon(22% 0, 78% 0, 100% 100%, 0 100%);
-  background: linear-gradient(to bottom, rgba(123, 240, 233, .23), rgba(54, 189, 210, .07) 62%, transparent);
-  filter: blur(2px);
-  animation: beam-breathe 2.8s ease-in-out infinite;
-}
-.orbit {
-  position: absolute;
-  left: 50%;
-  z-index: 1;
-  border: 1px solid rgba(129, 230, 222, .48);
-  border-radius: 50%;
-  box-shadow: 0 0 12px rgba(74, 219, 222, .14), inset 0 0 10px rgba(74, 219, 222, .12);
-  transform: translateX(-50%) rotateX(68deg);
-}
-.orbit-one { top: 78px; width: 82%; height: 62px; animation: orbit-pulse 4.2s ease-in-out infinite; }
-.orbit-two { top: 111px; width: 66%; height: 48px; animation: orbit-pulse 4.2s ease-in-out -1.2s infinite; }
-.orbit-three { top: 143px; width: 49%; height: 34px; animation: orbit-pulse 4.2s ease-in-out -2.4s infinite; }
-.defect-visual {
-  position: absolute;
-  left: 50%;
-  top: 2px;
-  z-index: 5;
-  width: 72%;
-  height: 116px;
-  padding: 0 !important;
-  display: grid;
-  place-items: center;
-  overflow: hidden;
-  border: 1px solid rgba(103, 230, 225, .58);
-  border-radius: 7px;
-  background: radial-gradient(circle at 50% 35%, rgba(43, 160, 185, .25), rgba(4, 19, 32, .95) 70%);
-  clip-path: polygon(8% 0, 92% 0, 100% 16%, 100% 84%, 92% 100%, 8% 100%, 0 84%, 0 16%);
-  transform: translateX(-50%) translateZ(46px);
-  box-shadow: 0 0 0 1px rgba(109, 226, 220, .18), 0 16px 26px rgba(0, 0, 0, .38), 0 0 22px rgba(42, 204, 220, .18);
-  animation: hologram-float 3.6s ease-in-out infinite;
-}
-.defect-visual img { width: 100%; height: 100%; object-fit: cover; transition: transform .45s ease, filter .45s ease; }
-.defect-card:hover .defect-visual img { transform: scale(1.08); filter: saturate(1.2) contrast(1.06); }
-.visual-placeholder { display: grid; place-items: center; height: 100%; color: #69d9d2; font-size: 42px; opacity: .7; }
-.defect-visual em { position: absolute; left: 10px; top: 9px; padding: 3px 6px; border: 1px solid rgba(113, 225, 216, .55); border-radius: 3px; color: #9aeae1; background: rgba(4, 25, 40, .72); font: 8px monospace; letter-spacing: 1px; }
-.scan-line { position: absolute; left: 0; right: 0; top: -20%; height: 2px; background: linear-gradient(90deg, transparent, #65e8de, transparent); opacity: .6; box-shadow: 0 0 10px #65e8de; animation: scan 3.8s linear infinite; }
-.visual-corner { position: absolute; width: 12px; height: 12px; border-color: #71e4d8; border-style: solid; opacity: .85; }
-.corner-tl { left: 7px; top: 7px; border-width: 1px 0 0 1px; }.corner-br { right: 7px; bottom: 7px; border-width: 0 1px 1px 0; }
-.card-platform {
-  position: absolute;
-  left: 13%;
-  right: 13%;
-  top: 134px;
-  height: 82px;
-  z-index: 3;
-  pointer-events: none;
-  transform-style: preserve-3d;
-}
-.card-platform::before {
-  content: "";
-  position: absolute;
-  inset: 24px -18px 0;
-  background: radial-gradient(ellipse, rgba(49, 218, 231, .5), transparent 68%);
-  filter: blur(10px);
-}
-.card-platform i {
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 54px;
-  display: block;
-  border: 1px solid rgba(126, 236, 232, .62);
-  background: linear-gradient(145deg, rgba(126, 239, 232, .42), rgba(83, 124, 182, .18) 55%, rgba(220, 189, 126, .2));
-  clip-path: polygon(50% 0, 100% 35%, 50% 70%, 0 35%);
-  box-shadow: 0 0 20px rgba(61, 211, 224, .22);
-}
-.card-platform i:nth-child(1) { top: 0; opacity: .9; }
-.card-platform i:nth-child(2) { top: 13px; transform: scale(.92); opacity: .68; }
-.card-platform i:nth-child(3) { top: 26px; transform: scale(.84); opacity: .48; }
-.card-platform i:nth-child(4) { top: 39px; transform: scale(.76); opacity: .3; }
-.defect-card:hover .card-platform { transform: translateZ(12px) scale(1.06); }
-.defect-card-body {
-  position: relative;
-  z-index: 6;
-  width: 92%;
-  min-height: 112px;
-  margin: -6px auto 0;
-  padding: 13px 14px 11px;
-  border: 1px solid rgba(89, 213, 216, .5);
-  border-radius: 7px;
-  background: linear-gradient(145deg, rgba(16, 58, 72, .96), rgba(5, 25, 40, .98));
-  clip-path: polygon(5% 0, 95% 0, 100% 13%, 100% 87%, 95% 100%, 5% 100%, 0 87%, 0 13%);
-  transform: translateZ(18px);
-  box-shadow: inset 0 0 24px rgba(90, 218, 214, .07), 0 12px 22px rgba(0, 0, 0, .28);
-}
-.defect-card-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.defect-card-title strong { overflow: hidden; color: #d9f6f5; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
-.defect-card-title span { flex: 0 0 auto; color: #f2ca74; font: 700 11px monospace; }
-.defect-code { display: block; margin-top: 5px; color: #6d9eac; font: 10px monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.defect-card-body p { height: 15px; overflow: hidden; margin: 7px 0; color: #8baeba; font-size: 10px; line-height: 15px; text-overflow: ellipsis; white-space: nowrap; }
-.defect-card-actions { display: flex; gap: 8px; border-top: 1px solid rgba(53, 102, 119, .45); padding-top: 8px; }
-.defect-card-actions .text-button { font-size: 10px; }
-@keyframes defect-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes scan { 0% { transform: translateY(0); opacity: 0; } 12% { opacity: .65; } 88% { opacity: .65; } 100% { transform: translateY(150px); opacity: 0; } }
-@keyframes live-pulse { 50% { opacity: .35; transform: scale(.65); } }
-@keyframes hologram-float { 0%, 100% { transform: translateX(-50%) translateY(0) translateZ(46px); } 50% { transform: translateX(-50%) translateY(-7px) translateZ(52px); } }
-@keyframes orbit-pulse { 0%, 100% { opacity: .34; transform: translateX(-50%) rotateX(68deg) scale(.94); } 50% { opacity: .82; transform: translateX(-50%) rotateX(68deg) scale(1.05); } }
-@keyframes beam-breathe { 0%, 100% { opacity: .38; } 50% { opacity: .85; } }
-.defect-thumb {
-  width: 64px;
-  height: 48px;
-  padding: 0 !important;
-  overflow: hidden;
-  display: grid;
-  place-items: center;
-}
-.defect-thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.label-list {
-  max-height: 350px;
-  overflow: auto;
-  margin-bottom: 14px;
-}
-.label-list > div {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid #244050;
-  padding: 9px 0;
-  font-size: 12px;
-}
-.label-list small {
-  margin-right: 6px;
-  color: #68bfb9;
-}
-.defect-preview {
-  text-align: center;
-}
-.defect-preview img {
-  max-width: 100%;
-  max-height: 55vh;
-  object-fit: contain;
-}
-.defect-preview p {
-  margin: 16px 0;
-}
-@media (max-width: 1100px) {
-  .defect-layout { grid-template-columns: minmax(0, 1fr) 250px; gap: 12px; }
-  .defect-gallery { grid-template-columns: repeat(auto-fill, minmax(175px, 1fr)); gap: 10px; }
-}
+.defect-layout { display:grid; grid-template-columns:minmax(0,1fr) 260px; gap:20px; align-items:start; }
+.defect-gallery-panel { min-width:0; background:radial-gradient(ellipse at 50% 35%,#10425766,transparent 65%),#091c2a; }
+.defect-gallery-panel > .ws-panel-heading { align-items:center; }
+.live-signal { color:#81b6bc; font:10px monospace; letter-spacing:1px; }
+.live-signal i { display:inline-block; width:6px; height:6px; margin-right:6px; background:#64e4df; border-radius:50%; box-shadow:0 0 12px #64e4df; }
+.defect-gallery { isolation:isolate; position:relative; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:26px 18px; padding:22px 8px 24px; }
+.atlas-floor { position:absolute; inset:0; z-index:-1; pointer-events:none; background:radial-gradient(ellipse at 50% 42%,#1cbfe51c,transparent 64%),repeating-linear-gradient(30deg,transparent 0 94px,#71d4de09 95px 96px),repeating-linear-gradient(150deg,transparent 0 94px,#71d4de09 95px 96px); mask-image:linear-gradient(transparent,#000 15%,#000 85%,transparent); }
+.defect-card { position:relative; min-width:0; --glow:#7cdedc; }
+.defect-card:nth-of-type(3n+2) { --glow:#adbeef; }
+.hologram-scene { position:relative; height:275px; isolation:isolate; perspective:800px; }
+.projection-beam { position:absolute; left:15%; right:15%; bottom:37px; height:170px; clip-path:polygon(0 0,100% 0,70% 100%,30% 100%); background:linear-gradient(180deg,transparent,#83dcdf0b 30%,#9ceee731); pointer-events:none; }
+.orbital { position:absolute; left:50%; width:94%; height:70px; border:1px solid #8ccdda35; border-radius:50%; transform:translateX(-50%); pointer-events:none; box-shadow:0 0 20px #6ad9ea0b,inset 0 0 18px #6ad9ea08; }
+.orbital-outer { top:24px; animation:orbit-breathe 5s ease-in-out infinite; }
+.orbital-inner { top:155px; width:78%; height:49px; border-color:#aedbd94d; }
+.projection-base { position:absolute; left:50%; bottom:16px; width:74%; height:70px; transform:translateX(-50%); pointer-events:none; }
+.projection-base i { position:absolute; inset:0; border:1px solid #9de4e082; border-radius:50%; background:radial-gradient(ellipse,#bcece51f,transparent 66%); box-shadow:0 0 15px #8cddd624; }
+.projection-base i:nth-child(2) { inset:10px 13%; border-color:#9fd8e9a6; }
+.projection-base i:nth-child(3) { inset:19px 25%; background:#e9e1d3; box-shadow:0 0 20px #c4ede58c,0 0 40px #62cfee55; border:0; }
+.projection-base b { position:absolute; inset:31px -5% -8px; z-index:-1; background:#72cde013; border:1px solid #74cfe82e; transform:rotateX(62deg) rotateZ(-30deg); box-shadow:0 12px 0 #7fc7df0a,0 24px 0 #7fc7df06; }
+.defect-card .defect-visual { position:absolute; inset:8px 12% auto; width:76%; height:158px; padding:8px; display:grid; place-items:center; overflow:visible; border:0; border-radius:8px; background:radial-gradient(ellipse,#142f4080,transparent 72%); transform:translateY(0); cursor:zoom-in; }
+.defect-visual img,.defect-visual .visual-placeholder { animation:hologram-float 5s ease-in-out infinite; }
+.defect-card:nth-of-type(2n) .defect-visual img { animation-delay:-2s; }
+.defect-card .defect-visual:hover { background:radial-gradient(ellipse,#22546a88,transparent 72%); transform:none; }
+.defect-visual img { display:block; width:100%; height:100%; min-height:0; object-fit:contain; filter:drop-shadow(0 10px 10px #0007) drop-shadow(0 0 7px #87e1e52b); }
+.defect-card:hover .projection-base { filter:brightness(1.3); }
+.defect-card:hover .orbital { border-color:#b3eeeb99; }
+.hologram-caption { position:absolute; left:5%; right:5%; bottom:86px; text-align:center; color:#e1f2ee; font-size:13px; text-shadow:0 0 12px #a6e8e7a0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.visual-placeholder { display:grid; gap:8px; text-align:center; color:#adcbd0; font-size:11px; }
+.visual-placeholder b { color:#ffe6a9; font-size:46px; font-weight:400; filter:drop-shadow(0 0 12px #f3d99f77); }
+.preview-hint { position:absolute; bottom:-10px; color:#b4d8df; font-size:10px; opacity:0; transition:opacity .2s; }
+.defect-visual:hover .preview-hint,.defect-visual:focus-visible .preview-hint { opacity:1; }
+.defect-card-body { position:relative; margin:0 8px; padding:12px 10px 8px; border-top:1px solid #80cbc547; background:linear-gradient(180deg,#78c9cb0c,transparent); }
+.defect-card-title { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+.defect-card-title strong { color:#dff0ef; font-size:14px; overflow-wrap:anywhere; }
+.defect-card-title span { flex-shrink:0; color:#f5d398; font:600 12px/20px monospace; }
+.defect-code { display:block; margin-top:6px; color:#85a9ba; font-size:11px; overflow-wrap:anywhere; }
+.defect-card-body p { min-height:38px; margin:8px 0; color:#9eb8c6; font-size:12px; line-height:19px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.defect-card-actions { display:flex; gap:4px; }
+.defect-card-actions .text-button { font-size:11px; padding:4px 6px; border-color:transparent; }
+.defect-card-actions .danger { margin-left:auto; }
+.label-list { max-height:350px; overflow:auto; margin-bottom:14px; }
+.label-list > div { display:flex; align-items:center; justify-content:space-between; gap:8px; border-bottom:1px solid #244050; padding:10px 0; font-size:12px; }
+.label-list small { margin-right:6px; color:#68bfb9; }
+.defect-preview { text-align:center; }
+.defect-preview img { display:block; width:100%; height:55vh; object-fit:contain; background:#071522; border-radius:8px; }
+.defect-preview p { margin:16px 0; }
+.defect-editor-form { position:relative; overflow:hidden; padding:4px 2px 2px; }
+.defect-editor-form::before { content:""; position:absolute; inset:0; pointer-events:none; border:1px solid rgba(82,213,241,.24); border-radius:14px; background:linear-gradient(135deg,rgba(49,168,202,.08),transparent 38%,rgba(222,177,77,.06)); }
+.defect-editor-form > * { position:relative; z-index:1; }
+.defect-editor-form .ws-form-grid { gap:14px; padding:18px; border:1px solid rgba(80,186,217,.2); border-radius:12px; background:linear-gradient(135deg,rgba(7,38,61,.72),rgba(7,20,37,.76)); box-shadow:inset 0 1px rgba(255,255,255,.06),0 0 24px rgba(26,174,218,.07); }
+.defect-editor-form label { color:#91b5c5; letter-spacing:.03em; }
+.defect-editor-form input,.defect-editor-form select,.defect-editor-form textarea { border-color:rgba(81,198,231,.38); background:rgba(3,21,38,.9); box-shadow:inset 0 0 12px rgba(31,157,204,.06); transition:border-color .2s,box-shadow .2s,transform .2s; }
+.defect-editor-form input:focus,.defect-editor-form select:focus,.defect-editor-form textarea:focus { border-color:#5edfff; box-shadow:0 0 16px rgba(78,215,255,.2),inset 0 0 12px rgba(31,157,204,.12); transform:translateY(-1px); }
+.defect-editor-form textarea { min-height:86px; resize:vertical; }
+.defect-editor-form .ws-form-footer { margin-top:18px; padding:14px 4px 0; border-top:1px solid rgba(91,179,207,.2); }
+.defect-editor-form .ws-form-footer .primary { min-width:130px; box-shadow:0 0 20px rgba(45,203,241,.2); }
+@keyframes hologram-float { 50% { transform:translateY(-8px); } }
+@keyframes orbit-breathe { 50% { opacity:.5; transform:translateX(-50%) translateY(6px); } }
+@media(max-width:1300px) { .defect-layout { grid-template-columns:minmax(0,1fr); } .defect-layout > aside { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; } }
+@media(max-width:850px) { .defect-gallery { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:580px) { .defect-gallery,.defect-layout > aside { grid-template-columns:minmax(0,1fr); } }
+@media(prefers-reduced-motion:reduce) { .defect-visual img,.defect-visual .visual-placeholder,.orbital { animation:none !important; } }
 </style>

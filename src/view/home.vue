@@ -29,23 +29,24 @@
             <div class="machine-content" @click.stop="showPop(machine, $event)">
               <div class="machine-img-status">
                 <div class="machine-img-container" :class="{ 'running': machine.isUsing }">
-                  <img :src="machine.img" :alt="machine.name" class="machine-img">
+                  <MachineModel :name="machine.name" :status="machine.faultPoints.length ? 'fault' : machine.isUsing ? 'normal' : 'missing'" @select="showPop(machine, $event)" />
                 </div>
                 <!-- 故障监测点显示 -->
                 <div class="fault-points" v-if="machine.faultPoints && machine.faultPoints.length > 0">
                   <div class="fault-title">故障监测点:</div>
                   <div
                       class="fault-point"
-                      v-for="(point, index) in machine.faultPoints"
+                      v-for="(point, index) in machine.faultPoints.slice(0, 2)"
                       :key="index"
                   >
                     {{ point.point }}
                   </div>
+                  <div v-if="machine.faultPoints.length > 2" class="fault-more">另有 {{ machine.faultPoints.length - 2 }} 个异常点</div>
                 </div>
               </div>
               <div class="machine-name">
                 <span>{{ machine.name }}</span>
-                <em>{{ machine.isUsing ? 'RUNNING' : 'OFFLINE' }}</em>
+                <em>{{ machine.faultPoints.length ? 'FAULT' : machine.isUsing ? 'RUNNING' : 'OFFLINE' }}</em>
               </div>
             </div>
           </div>
@@ -55,7 +56,7 @@
     <div class="data">
       <productionInsights :line-data="list" />
     </div>
-    <pop ref="pop" :lineData="currentMachineData" @close="onPopClose"></pop>
+    <Teleport to="body"><pop ref="pop" :lineData="currentMachineData" @close="onPopClose"></pop></Teleport>
   </div>
 </template>
 
@@ -69,9 +70,7 @@ import pop from "@/components/pop/index.vue";
 import overData from "./components/overData/overData.vue"
 
 // 导入图片
-import machineImg from "../assets/image/machine.png";
-import machineError from "../assets/image/machine_error.png"
-import machineStop from "../assets/image/machine_stop.png"
+import MachineModel from "../components/MachineModel/index.vue";
 
 export default {
   data() {
@@ -86,19 +85,19 @@ export default {
       currentMachineData: null, // 专门存储当前选中产线的实时数据
       machineRows: [
         [
-          { name: '高1产线', des:'gao1', img: machineImg, isUsing: false, showPop: false, faultPoints: [] },
-          { name: '高2产线', des:'gao2', img: machineImg, isUsing: false, showPop: false, faultPoints: [] },
-          { name: '高3产线', des:'gao3', img: machineImg, isUsing: false, showPop: false, faultPoints: [] }
+          { name: '高1产线', des:'gao1', isUsing: false, showPop: false, faultPoints: [] },
+          { name: '高2产线', des:'gao2', isUsing: false, showPop: false, faultPoints: [] },
+          { name: '高3产线', des:'gao3', isUsing: false, showPop: false, faultPoints: [] }
         ],
         [
-          { name: '高4产线', des:'gao4', img: machineImg, isUsing: true, showPop: false, faultPoints: [] },
-          { name: '高5产线', des:'gao5', img: machineImg, isUsing: true, showPop: false, faultPoints: [] },
-          { name: '高6产线', des:'gao6', img: machineImg, isUsing: true, showPop: false, faultPoints: [] }
+          { name: '高4产线', des:'gao4', isUsing: true, showPop: false, faultPoints: [] },
+          { name: '高5产线', des:'gao5', isUsing: true, showPop: false, faultPoints: [] },
+          { name: '高6产线', des:'gao6', isUsing: true, showPop: false, faultPoints: [] }
         ],
         [
-          { name: '高7产线', des:'gao7', img: machineImg, isUsing: true, showPop: false, faultPoints: [] },
-          { name: '高8产线', des:'gao8', img: machineImg, isUsing: true, showPop: false, faultPoints: [] },
-          { name: '高9产线', des:'gao9', img: machineImg, isUsing: true, showPop: false, faultPoints: [] }
+          { name: '高7产线', des:'gao7', isUsing: true, showPop: false, faultPoints: [] },
+          { name: '高8产线', des:'gao8', isUsing: true, showPop: false, faultPoints: [] },
+          { name: '高9产线', des:'gao9', isUsing: true, showPop: false, faultPoints: [] }
         ]
       ]
     }
@@ -106,6 +105,7 @@ export default {
   components: {
     top,
     productionInsights,
+    MachineModel,
     pop,
     overData
   },
@@ -166,8 +166,9 @@ export default {
       await this.$refs.pop.getShow({
         title: machine.name,
         position: {
-          top: rect.top + window.scrollY + rect.height / 2 - 80,
-          left: rect.right + window.scrollX + 50
+          top: rect.top + rect.height / 2 - 80,
+          left: rect.right + 16,
+          anchorLeft: rect.left
         }
       });
     },
@@ -232,7 +233,7 @@ export default {
 
           if (!machineData) {
             // 如果没有对应数据，设置图片为空
-            machine.img = machineStop;
+
             machine.faultPoints = [];
             machine.isUsing = false;
           } else {
@@ -242,12 +243,12 @@ export default {
 
             if (failedPoints.length > 0) {
               // 有失败的检测点，设置为错误图片并记录故障点
-              machine.img = machineError;
+
               machine.isUsing = false;
               machine.faultPoints = failedPoints;
             } else {
               // 正常状态，设置为机器图片
-              machine.img = machineImg;
+
               machine.isUsing = true;
               machine.faultPoints = [];
             }
@@ -315,9 +316,11 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.fault-more { color:#f7c190; font-size:9PX; margin-top:3PX; }
+
 .container{
-  width: 100vw;
-  height: 100vh;
+  width: 100cqw;
+  height: 100cqh;
   position: relative;
   background:
       radial-gradient(circle at 24% 24%, rgba(0, 226, 255, 0.18), transparent 28%),
@@ -361,19 +364,17 @@ export default {
   height: 520px;
   left: -170px;
   bottom: -240px;
-  animation: rotateRing 22s linear infinite;
 }
 .ring-right {
   width: 340px;
   height: 340px;
-  right: 5vw;
+  right: 5cqw;
   top: -130px;
   border-color: rgba(255, 204, 102, 0.24);
-  animation: rotateRing 18s linear reverse infinite;
 }
 .top{
   width: 100%;
-  height: 7vh;
+  height: 7cqh;
   position: relative;
   z-index: 5;
 }
@@ -436,12 +437,12 @@ export default {
 }
 .overview-section {
   width: 100%;
-  height: 12vh;
+  height: 12cqh;
   flex-shrink: 0;
 }
 .data{
   width: 100%;
-  height: 25vh;
+  height: 25cqh;
   position: relative;
   z-index: 3;
   padding: 0 12px 10px;
@@ -449,7 +450,7 @@ export default {
 }
 .home {
   width: 100%;
-  height: 68vh;
+  height: 68cqh;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -462,8 +463,8 @@ export default {
 }
 .stage-orbit {
   position: absolute;
-  width: 74vw;
-  height: 42vh;
+  width: 74cqw;
+  height: 42cqh;
   left: 50%;
   top: 48%;
   transform: translate(-50%, -50%) perspective(900px) rotateX(58deg);
@@ -485,14 +486,13 @@ export default {
 .stage-orbit::after {
   inset: 21%;
   border-color: rgba(101, 213, 255, 0.18);
-  animation: rotateRing 18s linear infinite;
 }
 .stage-light {
   position: absolute;
-  width: 76vw;
-  height: 35vh;
+  width: 76cqw;
+  height: 35cqh;
   left: 50%;
-  bottom: 4vh;
+  bottom: 4cqh;
   transform: translateX(-50%);
   pointer-events: none;
   background: radial-gradient(ellipse at center, rgba(0, 194, 255, 0.22), rgba(0, 64, 120, 0.06) 46%, transparent 72%);
@@ -500,10 +500,10 @@ export default {
 }
 .depth-floor {
   position: absolute;
-  width: 86vw;
-  height: 48vh;
+  width: 86cqw;
+  height: 48cqh;
   left: 50%;
-  bottom: 2vh;
+  bottom: 2cqh;
   transform: translateX(-50%) rotateX(62deg);
   transform-origin: center bottom;
   pointer-events: none;
@@ -515,7 +515,6 @@ export default {
   background-size: 44px 44px, 44px 44px, 100% 100%;
   box-shadow: inset 0 0 65px rgba(0, 194, 255, 0.08);
   mask-image: radial-gradient(ellipse at center, #000 0%, #000 55%, transparent 78%);
-  animation: floorDrift 12s linear infinite;
 }
 .depth-floor::before,
 .depth-floor::after {
@@ -541,7 +540,7 @@ export default {
   height: 100%;
   position: relative;
   // 整组统一收拢并上移，保留九台产线的相对排列及透视关系。
-  transform: translateY(-3vh) scale(0.94);
+  transform: translateY(-3cqh) scale(0.94);
   transform-origin: center;
   transform-style: preserve-3d;
   pointer-events: none;
@@ -587,25 +586,25 @@ export default {
 }
 /* 为每个产线定义单独的位置和大小调整 - 近大远小效果 */
 .machine-item.pos-0-0 {
-  transform: translate3d(17vw, -3vh, -120px) rotateX(4deg) rotateZ(-2deg) scale(0.7);
+  transform: translate3d(17cqw, -3cqh, -120px) rotateX(4deg) rotateZ(-2deg) scale(0.7);
   z-index: 2;
   opacity: 0.86;
 }
 
 .machine-item.pos-0-1 {
-  transform: translate3d(8vw, 3vh, -95px) rotateX(4deg) rotateZ(-1deg) scale(0.75);
+  transform: translate3d(8cqw, 3cqh, -95px) rotateX(4deg) rotateZ(-1deg) scale(0.75);
   z-index: 3;
   opacity: 0.9;
 }
 
 .machine-item.pos-0-2 {
-  transform: translate3d(-3vw, 8vh, -70px) rotateX(4deg) rotateZ(1deg) scale(0.8);
+  transform: translate3d(-3cqw, 8cqh, -70px) rotateX(4deg) rotateZ(1deg) scale(0.8);
   z-index: 4;
   opacity: 0.93;
 }
 
 .machine-item.pos-1-0 {
-  transform: translate3d(8vw, -10vh, -35px) rotateX(4deg) rotateZ(-2deg) scale(0.85);
+  transform: translate3d(8cqw, -10cqh, -35px) rotateX(4deg) rotateZ(-2deg) scale(0.85);
   z-index: 30;
 }
 
@@ -614,27 +613,27 @@ export default {
 }
 
 .machine-item.pos-1-1 {
-  transform: translate3d(-4vw, -4vh, 0) rotateX(4deg) scale(0.9);
+  transform: translate3d(-4cqw, -4cqh, 0) rotateX(4deg) scale(0.9);
   z-index: 6;
 }
 
 .machine-item.pos-1-2 {
-  transform: translate3d(-12vw, 2vh, 35px) rotateX(4deg) rotateZ(1deg) scale(0.95);
+  transform: translate3d(-12cqw, 2cqh, 35px) rotateX(4deg) rotateZ(1deg) scale(0.95);
   z-index: 7;
 }
 
 .machine-item.pos-2-0 {
-  transform: translate3d(-5vw, -15vh, 70px) rotateX(4deg) rotateZ(-2deg) scale(1);
+  transform: translate3d(-5cqw, -15cqh, 70px) rotateX(4deg) rotateZ(-2deg) scale(1);
   z-index: 8;
 }
 
 .machine-item.pos-2-1 {
-  transform: translate3d(-10vw, -8vh, 95px) rotateX(4deg) scale(1.05);
+  transform: translate3d(-10cqw, -8cqh, 95px) rotateX(4deg) scale(1.05);
   z-index: 9;
 }
 
 .machine-item.pos-2-2 {
-  transform: translate3d(-15vw, -2vh, 120px) rotateX(4deg) rotateZ(2deg) scale(1.06);
+  transform: translate3d(-15cqw, -2cqh, 120px) rotateX(4deg) rotateZ(2deg) scale(1.06);
   z-index: 10;
 }
 
@@ -672,23 +671,6 @@ export default {
   background: linear-gradient(145deg, rgba(0, 38, 72, 0.28), rgba(0, 0, 0, 0.02));
   transform-style: preserve-3d;
 
-  &.running::before {
-    content: '';
-    position: absolute;
-    top: 34%;
-    left: -8%;
-    width: 42%;
-    height: 64%;
-    background: linear-gradient(60deg,
-        transparent,
-        rgba(64, 158, 255, 0.28) 48%,
-        transparent);
-    animation: runningShimmer 3.2s infinite;
-    z-index: 2;
-    transform: rotate(-24deg);
-    transform-origin: center;
-    pointer-events: none;
-  }
 }
 .machine-img-container::after {
   content: '';
@@ -748,12 +730,14 @@ export default {
   padding: 10px 12px;
   min-width: 120px;
   max-width: 140px;
+  max-height: 110px;
+  overflow-y: auto;
+  box-sizing: border-box;
   color: white;
   font-size: 12px;
   box-shadow: 0 4px 15px rgba(255, 0, 0, 0.5),
   0 0 20px rgba(255, 100, 100, 0.4) inset;
   position: relative;
-  overflow: hidden;
   backdrop-filter: blur(5px);
   animation: pulse 2s infinite;
   transform-origin: left center;
@@ -791,20 +775,6 @@ export default {
   animation: blink 1.5s infinite;
 }
 
-@keyframes runningShimmer {
-  0% {
-    transform: rotate(-24deg) translate3d(-20%, 45%, 0);
-    opacity: 0;
-  }
-  18% {
-    opacity: 1;
-  }
-  100% {
-    transform: rotate(-24deg) translate3d(300%, 8%, 0);
-    opacity: 0;
-  }
-}
-
 @keyframes pulse {
   0%, 100% {
     box-shadow: 0 4px 15px rgba(255, 0, 0, 0.5),
@@ -834,18 +804,4 @@ export default {
   transform-origin: center;
 }
 
-@keyframes rotateRing {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes floorDrift {
-  from {
-    background-position: 0 0, 0 0, center;
-  }
-  to {
-    background-position: 44px 44px, 44px 44px, center;
-  }
-}
 </style>

@@ -93,6 +93,8 @@ export default {
       url: '',
       title: '',
       position: { top: 0, left: 0 },
+      requestedPosition: { top: 0, left: 0 },
+      panelHeight: 420,
       isAnimating: false,
       animationVersion: 0,
     }
@@ -109,21 +111,32 @@ export default {
       immediate: true
     }
   },
+  mounted() { window.addEventListener("resize", this.reposition); window.visualViewport?.addEventListener("resize", this.reposition); },
   beforeUnmount() {
+    window.removeEventListener("resize", this.reposition);
+    window.visualViewport?.removeEventListener("resize", this.reposition);
     this.animationVersion++;
     if (this.$refs.popWinMain) gsap.killTweensOf(this.$refs.popWinMain);
   },
   methods: {
+    reposition() {
+      if (!this.show) return;
+      this.position = this.getSafePosition(this.requestedPosition);
+      if (this.$refs.popWinMain && !this.isAnimating) this.$refs.popWinMain.style.height = this.panelHeight + 'px';
+    },
     getSafePosition(position = { top: 0, left: 0 }) {
       const margin = 16;
-      const panelWidth = 285;
-      const panelHeight = Math.round(window.innerHeight * 0.4);
-      const maxLeft = Math.max(margin, window.innerWidth - panelWidth - margin);
-      const maxTop = Math.max(margin, window.innerHeight - panelHeight - margin);
-
+      const viewport = window.visualViewport;
+      const width = viewport?.width || document.documentElement.clientWidth;
+      const height = viewport?.height || window.innerHeight;
+      const originX = viewport?.offsetLeft || 0, originY = viewport?.offsetTop || 0;
+      const panelWidth = this.$refs.popWinMain?.offsetWidth || Math.min(340, width - 32);
+      this.panelHeight = Math.min(460, Math.max(360, height * .44), height - margin * 2);
+      let left = position.left ?? margin;
+      if (left + panelWidth > originX + width - margin && position.anchorLeft != null) left = position.anchorLeft - panelWidth - 16;
       return {
-        left: Math.min(Math.max(position.left || margin, margin), maxLeft),
-        top: Math.min(Math.max(position.top || margin, margin), maxTop)
+        left: Math.max(originX + margin, Math.min(left, originX + width - panelWidth - margin)),
+        top: Math.max(originY + margin, Math.min(position.top ?? margin, originY + height - this.panelHeight - margin))
       };
     },
 
@@ -132,17 +145,19 @@ export default {
       const previous = this.$refs.popWinMain;
       if (previous) gsap.killTweensOf(previous);
       this.title = e.title;
-      this.position = this.getSafePosition(e.position);
+      this.requestedPosition = e.position || {};
+      this.position = this.getSafePosition(this.requestedPosition);
       this.show = true;
       this.showInner = false;
       this.isAnimating = true;
       await this.$nextTick();
       const panel = this.$refs.popWinMain;
       if (version !== this.animationVersion || !panel) return;
+      this.position = this.getSafePosition(this.requestedPosition);
       gsap.set(panel, { height: '0px', opacity: 0, scale: 0.92, rotationX: -8 });
       return new Promise(resolve => {
         gsap.to(panel, {
-          duration: 0.55, height: '40vh', opacity: 1, scale: 1, rotationX: 0,
+          duration: 0.55, height: this.panelHeight, opacity: 1, scale: 1, rotationX: 0,
           ease: 'power3.out',
           onInterrupt: resolve,
           onComplete: () => {
@@ -211,9 +226,9 @@ export default {
 .popWinBg {
   position: fixed;
   z-index: 10;
-  width: 10px;
+  width: 10PX;
   background: rgba(0, 0, 0, 0.4);
-  height: 10px;
+  height: 10PX;
   top: 0;
   left: 0;
   right: 0;
@@ -237,22 +252,25 @@ export default {
   pointer-events: initial;
   position: relative;
   overflow: hidden;
-  width: 285px;
-  max-width: 500px;
+  width: 340PX;
+  max-width: calc(100vw - 32PX);
+  box-sizing: border-box;
+  display:flex;
+  flex-direction:column;
   z-index: 100;
   transform-origin: center center;
-  top: v-bind('position.top + "px"');
-  left: v-bind('position.left + "px"');
+  top: v-bind('position.top + "PX"');
+  left: v-bind('position.left + "PX"');
   background:
       radial-gradient(circle at 16% 0%, rgba(101, 213, 255, 0.18), transparent 34%),
       linear-gradient(145deg, rgba(7, 28, 54, 0.94), rgba(3, 10, 24, 0.96));
-  border: 1px solid rgba(101, 213, 255, 0.5);
-  border-radius: 8px;
-  backdrop-filter: blur(14px);
+  border: 1PX solid rgba(101, 213, 255, 0.5);
+  border-radius: 8PX;
+  backdrop-filter: blur(14PX);
   box-shadow:
-      0 24px 68px rgba(0, 0, 0, 0.48),
-      0 0 34px rgba(0, 194, 255, 0.22),
-      inset 0 0 30px rgba(0, 194, 255, 0.08);
+      0 24PX 68PX rgba(0, 0, 0, 0.48),
+      0 0 34PX rgba(0, 194, 255, 0.22),
+      inset 0 0 30PX rgba(0, 194, 255, 0.08);
 }
 
 .pop-grid {
@@ -260,9 +278,9 @@ export default {
   inset: 0;
   pointer-events: none;
   background-image:
-      linear-gradient(rgba(101, 213, 255, 0.06) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(101, 213, 255, 0.06) 1px, transparent 1px);
-  background-size: 22px 22px;
+      linear-gradient(rgba(101, 213, 255, 0.06) 1PX, transparent 1PX),
+      linear-gradient(90deg, rgba(101, 213, 255, 0.06) 1PX, transparent 1PX);
+  background-size: 22PX 22PX;
   mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.75), transparent 88%);
 }
 
@@ -279,8 +297,8 @@ export default {
 
 .corner {
   position: absolute;
-  width: 42px;
-  height: 42px;
+  width: 42PX;
+  height: 42PX;
   pointer-events: none;
   border-color: #65d5ff;
   border-style: solid;
@@ -289,57 +307,58 @@ export default {
 .corner-lt {
   left: 0;
   top: 0;
-  border-width: 2px 0 0 2px;
+  border-width: 2PX 0 0 2PX;
 }
 
 .corner-rb {
   right: 0;
   bottom: 0;
-  border-width: 0 2px 2px 0;
+  border-width: 0 2PX 2PX 0;
 }
 
 .headTitle {
-  height: 66px;
+  flex-shrink:0;
+  height: 66PX;
   display: flex;
   justify-content: flex-start;
   align-items: center;
-  gap: 12px;
-  padding: 0 42px 0 18px;
+  gap: 12PX;
+  padding: 0 42PX 0 18PX;
   box-sizing: border-box;
   position: relative;
   color: #fff;
-  border-bottom: 1px solid rgba(101, 213, 255, 0.22);
+  border-bottom: 1PX solid rgba(101, 213, 255, 0.22);
   background: linear-gradient(90deg, rgba(0, 149, 251, 0.14), transparent);
 }
 
 .headTitle::after {
   content: '';
   position: absolute;
-  left: 18px;
-  right: 18px;
-  bottom: -1px;
-  height: 1px;
+  left: 18PX;
+  right: 18PX;
+  bottom: -1PX;
+  height: 1PX;
   background: linear-gradient(90deg, transparent, #65d5ff, #ffcc66, transparent);
   animation: lineGlow 2.8s ease-in-out infinite;
 }
 
 .title-pulse {
-  width: 34px;
-  height: 34px;
+  width: 34PX;
+  height: 34PX;
   flex-shrink: 0;
   position: relative;
   border-radius: 50%;
-  border: 1px solid rgba(101, 213, 255, 0.82);
+  border: 1PX solid rgba(101, 213, 255, 0.82);
   background:
       radial-gradient(circle, #ffcc66 0 20%, rgba(101, 213, 255, 0.45) 22% 44%, rgba(2, 18, 45, 0.9) 46%);
-  box-shadow: 0 0 24px rgba(101, 213, 255, 0.45), inset 0 0 14px rgba(255, 255, 255, 0.16);
+  box-shadow: 0 0 24PX rgba(101, 213, 255, 0.45), inset 0 0 14PX rgba(255, 255, 255, 0.16);
 }
 
 .title-pulse::before {
   content: '';
   position: absolute;
-  inset: -8px;
-  border: 1px solid rgba(101, 213, 255, 0.36);
+  inset: -8PX;
+  border: 1PX solid rgba(101, 213, 255, 0.36);
   border-radius: 50%;
   animation: radarPulse 2.2s ease-in-out infinite;
 }
@@ -347,32 +366,33 @@ export default {
 .title-pulse::after {
   content: '';
   position: absolute;
-  inset: -4px;
-  border: 1px dashed rgba(255, 204, 102, 0.4);
+  inset: -4PX;
+  border: 1PX dashed rgba(255, 204, 102, 0.4);
   border-radius: 50%;
   animation: rotateRing 5s linear infinite;
 }
 
 .headTitle span {
   display: block;
-  margin-bottom: 2px;
+  margin-bottom: 2PX;
   color: #ffcc66;
   font-family: DIN-Bold;
-  font-size: 10px;
-  letter-spacing: 2px;
+  font-size: 10PX;
+  letter-spacing: 2PX;
 }
 
 .headTitle p {
   margin: 0;
   color: #eaf9ff;
-  font-size: 19px;
+  font-size: 19PX;
   font-family: AlibabaPuHuiTiB;
-  letter-spacing: 2px;
-  text-shadow: 0 0 14px rgba(101, 213, 255, 0.45);
+  letter-spacing: 2PX;
+  text-shadow: 0 0 14PX rgba(101, 213, 255, 0.45);
 }
 
 .popContent {
-  padding: 18px;
+  flex:1; min-height:0; overflow:auto;
+  padding: 18PX;
   position: relative;
   z-index: 1;
   color: #fff;
@@ -381,8 +401,8 @@ export default {
 .data-section {
   display: flex;
   justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 16px;
+  gap: 10PX;
+  margin-bottom: 16PX;
   padding: 0;
   background: none;
 }
@@ -393,23 +413,23 @@ export default {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 72px;
-  border: 1px solid rgba(101, 213, 255, 0.28);
-  border-radius: 6px;
+  min-height: 72PX;
+  border: 1PX solid rgba(101, 213, 255, 0.28);
+  border-radius: 6PX;
   background:
       linear-gradient(180deg, rgba(0, 149, 251, 0.12), rgba(2, 18, 45, 0.56)),
       radial-gradient(circle at 50% 0%, rgba(101, 213, 255, 0.16), transparent 62%);
-  box-shadow: inset 0 0 16px rgba(0, 183, 255, 0.08);
+  box-shadow: inset 0 0 16PX rgba(0, 183, 255, 0.08);
   animation: itemRise 0.5s ease-out both;
 
   .data-label {
     color: #9ea8c7;
-    font-size: 12px;
-    margin-bottom: 5px;
+    font-size: 12PX;
+    margin-bottom: 5PX;
   }
 
   .data-value {
-    font-size: 20px;
+    font-size: 20PX;
     font-weight: bold;
 
     &.production {
@@ -424,19 +444,19 @@ export default {
 
 .points-section {
   h3 {
-    margin: 0 0 15px 0;
+    margin: 0 0 15PX 0;
     color: #eaf9ff;
-    font-size: 16px;
+    font-size: 16PX;
     font-weight: bold;
-    letter-spacing: 1px;
+    letter-spacing: 1PX;
   }
 }
 
 .points-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  height: 100px; /* 设置固定高度 */
+  gap: 10PX;
+  height: 100PX; /* 设置固定高度 */
   overflow-y: auto; /* 垂直滚动 */
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE and Edge */
@@ -445,56 +465,56 @@ export default {
 .point-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  border-radius: 6px;
-  border: 1px solid rgba(101, 213, 255, 0.16);
+  gap: 12PX;
+  padding: 10PX 12PX;
+  border-radius: 6PX;
+  border: 1PX solid rgba(101, 213, 255, 0.16);
   background: linear-gradient(90deg, rgba(2, 18, 45, 0.76), rgba(0, 67, 157, 0.24));
-  box-shadow: inset 0 0 12px rgba(0, 183, 255, 0.06);
+  box-shadow: inset 0 0 12PX rgba(0, 183, 255, 0.06);
   transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
   animation: itemRise 0.5s ease-out both;
 
   &.status-true {
-    border-left: 3px solid #34da62;
+    border-left: 3PX solid #34da62;
   }
 
   &.status-false {
-    border-left: 3px solid #ff4d4f;
+    border-left: 3PX solid #ff4d4f;
   }
 
   &:hover {
-    transform: translateX(4px);
+    transform: translateX(4PX);
     border-color: rgba(101, 213, 255, 0.38);
-    box-shadow: 0 0 18px rgba(0, 183, 255, 0.14), inset 0 0 14px rgba(0, 183, 255, 0.1);
+    box-shadow: 0 0 18PX rgba(0, 183, 255, 0.14), inset 0 0 14PX rgba(0, 183, 255, 0.1);
   }
 }
 
 .point-indicator {
-  width: 10px;
-  height: 10px;
+  width: 10PX;
+  height: 10PX;
   border-radius: 50%;
 
   .status-true & {
     background: #34da62;
-    box-shadow: 0 0 8px #34da62;
+    box-shadow: 0 0 8PX #34da62;
   }
 
   .status-false & {
     background: #ff4d4f;
-    box-shadow: 0 0 8px #ff4d4f;
+    box-shadow: 0 0 8PX #ff4d4f;
   }
 }
 
 .point-name {
   color: #fff;
-  font-size: 14px;
+  font-size: 14PX;
   flex: 1;
 }
 
 .point-status {
-  font-size: 12px;
-  padding: 4px 8px;
-  border-radius: 4px;
+  font-size: 12PX;
+  padding: 4PX 8PX;
+  border-radius: 4PX;
   font-weight: bold;
 
   .status-true & {
@@ -510,18 +530,18 @@ export default {
 
 .popClose {
   position: absolute;
-  right: 12px;
-  top: 13px;
-  width: 28px;
-  height: 28px;
-  border: 1px solid rgba(101, 213, 255, 0.35);
+  right: 12PX;
+  top: 13PX;
+  width: 28PX;
+  height: 28PX;
+  border: 1PX solid rgba(101, 213, 255, 0.35);
   background: rgba(0, 149, 251, 0.12);
-  border-radius: 4px;
+  border-radius: 4PX;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #65d5ff;
-  font-size: 18px;
+  font-size: 18PX;
   cursor: pointer;
   z-index: 2;
   transition: color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
@@ -529,35 +549,35 @@ export default {
   &:hover {
     color: #fff;
     border-color: rgba(255, 204, 102, 0.7);
-    box-shadow: 0 0 18px rgba(255, 204, 102, 0.2);
+    box-shadow: 0 0 18PX rgba(255, 204, 102, 0.2);
     transform: rotate(90deg);
   }
 }
 
 .detail-button-section {
-  margin-top: 16px;
-  padding-top: 14px;
-  border-top: 1px solid rgba(101, 213, 255, 0.18);
+  margin-top: 16PX;
+  padding-top: 14PX;
+  border-top: 1PX solid rgba(101, 213, 255, 0.18);
   display: flex;
   justify-content: center;
 }
 
 .detail-button {
   width: 100%;
-  height: 40px;
+  height: 40PX;
   position: relative;
   overflow: hidden;
   background: linear-gradient(90deg, #65d5ff 0%, #ffcc66 100%);
   color: #06101f;
   border: none;
-  padding: 0 20px;
-  border-radius: 4px;
-  font-size: 14px;
+  padding: 0 20PX;
+  border-radius: 4PX;
+  font-size: 14PX;
   font-weight: 700;
-  letter-spacing: 2px;
+  letter-spacing: 2PX;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 0 22px rgba(101, 213, 255, 0.28);
+  box-shadow: 0 0 22PX rgba(101, 213, 255, 0.28);
 
   &::before {
     content: '';
@@ -569,8 +589,8 @@ export default {
   }
 
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 0 28px rgba(255, 204, 102, 0.32);
+    transform: translateY(-2PX);
+    box-shadow: 0 0 28PX rgba(255, 204, 102, 0.32);
   }
 
   &:active {
@@ -620,7 +640,7 @@ export default {
 @keyframes itemRise {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(8PX);
   }
   to {
     opacity: 1;

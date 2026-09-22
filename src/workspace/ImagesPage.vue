@@ -67,10 +67,21 @@
           <button
             v-if="!readonly"
             @click="drawing = !drawing"
+            class="draw-button"
             :class="{ primary: drawing }"
             :disabled="!ready"
           >
-            {{ drawing ? "框选中" : "矩形框选" }}</button
+            {{ drawing ? "完成绘制" : "绘制矩形" }}</button
+          ><label v-if="!readonly" class="draw-category"
+            >缺陷类别<select v-model.number="toolbarCategory">
+              <option
+                v-for="(label, index) in labels"
+                :key="label.id"
+                :value="index"
+              >
+                {{ label.labelname }}
+              </option>
+            </select></label
           ><label
             >缩放
             <input
@@ -154,17 +165,6 @@
           <small>{{ boxes.length }} 个</small>
         </div>
         <p v-if="labelError" class="ws-error-text">{{ labelError }}</p>
-        <label v-if="!readonly"
-          >新增框类别<select v-model.number="category">
-            <option
-              v-for="(label, index) in labels"
-              :key="label.id"
-              :value="index"
-            >
-              {{ label.labelname }}
-            </option>
-          </select></label
-        >
         <div class="box-list">
           <button
             v-for="(box, index) in boxes"
@@ -182,20 +182,6 @@
           </button>
         </div>
         <div v-if="boxes[activeBox] && !readonly" class="ws-form">
-          <label
-            >缺陷类别<select
-              v-model.number="boxes[activeBox].defect"
-              @change="dirty = true"
-            >
-              <option
-                v-for="(label, index) in labels"
-                :key="label.id"
-                :value="index"
-              >
-                {{ label.labelname }}
-              </option>
-            </select></label
-          >
           <div class="ws-form-grid">
             <label v-for="(label, key) in coordinateLabels" :key="key"
               >{{ label
@@ -283,7 +269,7 @@
   </div>
 </template>
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from "vue";
+import { computed, ref, onMounted, onBeforeUnmount } from "vue";
 import { useRoute, useRouter, onBeforeRouteLeave } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { api, post, userId, pageData, assetUrl, validateBoxes } from "./api";
@@ -330,6 +316,21 @@ const today = new Date().toLocaleDateString("sv-SE"),
     width: "宽度",
     height: "高度",
   };
+const toolbarCategory = computed({
+  get() {
+    const active = boxes.value[activeBox.value];
+    return active ? Number(active.defect) : Number(category.value);
+  },
+  set(value) {
+    const next = Number(value);
+    category.value = next;
+    const active = boxes.value[activeBox.value];
+    if (active) {
+      active.defect = next;
+      dirty.value = true;
+    }
+  },
+});
 let anchor = null;
 const sources = {
   dataset: ["/api/BrandCamera/dataset-images", "datasetId"],
@@ -362,7 +363,10 @@ function load() {
 }
 function setImage(item) {
   selected.value = item;
-  boxes.value = (item?.yoloinfos || []).map((b) => ({ ...b }));
+  boxes.value = (item?.yoloinfos || []).map((b) => ({
+    ...b,
+    defect: labels.value.length ? labelIndex(b.defect) : b.defect,
+  }));
   activeBox.value = -1;
   dirty.value = false;
   drawing.value = false;
@@ -478,7 +482,30 @@ function removeBox() {
   dirty.value = true;
 }
 function labelName(value) {
-  return labels.value[value]?.labelname || `类别 ${value}`;
+  const numeric = Number(value);
+  const label =
+    (Number.isInteger(numeric) && numeric >= 0
+      ? labels.value[numeric]
+      : null) ||
+    labels.value.find((item) => String(item.id) === String(value));
+  return label?.labelname || `类别 ${value}`;
+}
+function labelIndex(value) {
+  // The service has returned both list indexes and stable string IDs over time.
+  // Keep the editor on indexes, then convert back to the service ID when needed.
+  if (typeof value === "string" && !/^-?\d+$/.test(value)) {
+    const byId = labels.value.findIndex((item) => String(item.id) === value);
+    if (byId >= 0) return byId;
+  }
+  const index = Number(value);
+  return Number.isInteger(index) && index >= 0 && index < labels.value.length
+    ? index
+    : Math.max(0, labels.value.findIndex((item) => String(item.id) === String(value)));
+}
+function apiDefectValue(index) {
+  const label = labels.value[index];
+  const id = label?.id;
+  return typeof id === "string" && !/^-?\d+$/.test(id) ? id : index;
 }
 async function save() {
   if (readonly || busy.value || !dirty.value || !selected.value || !ready.value)
@@ -499,7 +526,7 @@ async function save() {
         data: {
           imageid: selected.value.imageid,
           yoloinfos: snapshot.map((b) => ({
-            defect: Number(b.defect),
+            defect: apiDefectValue(Number(b.defect)),
             centerX: Number(b.centerX),
             centerY: Number(b.centerY),
             width: Number(b.width),
@@ -664,6 +691,12 @@ onMounted(() => {
   api("/api/MarkDefects/markdefectslabel")
     .then((data) => {
       labels.value = Array.isArray(data) ? data : [];
+      if (selected.value && !dirty.value) {
+        boxes.value = (selected.value.yoloinfos || []).map((b) => ({
+          ...b,
+          defect: labelIndex(b.defect),
+        }));
+      }
     })
     .catch((e) => (labelError.value = e.message));
   window.addEventListener("beforeunload", beforeUnload);
@@ -679,14 +712,15 @@ onBeforeUnmount(() => {
   display: grid;
   grid-template-columns: 230px minmax(0, 1fr) 255px;
   gap: 18px;
+  height: calc(100vh - 190px);
+  min-height: 500px;
 }
 .annotation-layout .ws-panel {
   padding: 16px;
+  min-height: 0;
+  overflow: hidden;
 }
-.image-catalog {
-  max-height: 760px;
-  overflow: auto;
-}
+.image-catalog { overflow: auto !important; }
 .catalog-item {
   display: flex;
   width: 100%;
@@ -730,12 +764,24 @@ onBeforeUnmount(() => {
   gap: 8px;
   font-size: 10px;
   flex-wrap: wrap;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
 .annotation-toolbar button {
-  font-size: 10px;
-  padding: 6px;
+  min-height: 38px;
+  padding: 8px 15px;
+  font-size: 12px;
 }
+.annotation-toolbar .draw-button {
+  min-width: 118px;
+  border-color: rgba(91, 222, 255, .65);
+  color: #dffaff;
+  background: linear-gradient(135deg, rgba(27, 98, 131, .9), rgba(8, 44, 70, .95));
+  box-shadow: 0 0 16px rgba(59, 213, 255, .15), inset 0 0 12px rgba(91, 222, 255, .08);
+  font-weight: 700;
+}
+.annotation-toolbar .draw-button.primary { box-shadow: 0 0 24px rgba(59, 213, 255, .42), inset 0 0 16px rgba(91, 222, 255, .18); }
+.draw-category { flex-direction: row !important; align-items: center; gap: 7px; }
+.draw-category select { min-width: 130px; min-height: 38px; }
 .annotation-toolbar label {
   flex-direction: row;
   align-items: center;
@@ -744,8 +790,8 @@ onBeforeUnmount(() => {
   width: 80px;
 }
 .annotation-scroll {
-  max-height: 560px;
-  min-height: 220px;
+  height: calc(100% - 128px);
+  min-height: 180px;
   overflow: auto;
   background: repeating-conic-gradient(#102534 0% 25%, #122a3a 0% 50%) 50%/20px
     20px;
@@ -792,7 +838,7 @@ onBeforeUnmount(() => {
 .box-list {
   display: grid;
   gap: 8px;
-  max-height: 230px;
+  max-height: 190px;
   overflow: auto;
   margin: 15px 0;
 }
@@ -808,7 +854,7 @@ onBeforeUnmount(() => {
   width: 100%;
 }
 .validation-result {
-  margin-top: 25px;
+  margin-top: 12px;
 }
 .validation-result img {
   width: 100%;
@@ -835,5 +881,12 @@ onBeforeUnmount(() => {
   .annotation-labels {
     grid-column: auto;
   }
+}
+
+@media (max-height: 820px) {
+  .annotation-layout { height: calc(100vh - 165px); min-height: 420px; }
+  .annotation-layout .ws-panel { padding: 12px; }
+  .annotation-toolbar { margin-bottom: 6px; }
+  .annotation-scroll { height: calc(100% - 112px); }
 }
 </style>

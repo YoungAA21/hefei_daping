@@ -1,5 +1,5 @@
 <template>
-  <div class="workspace-ui workspace-shell" :class="{ collapsed }">
+  <div class="workspace-ui workspace-shell" :class="{ collapsed, 'production-shell': $route.name === 'workspace-production' }">
     <aside class="ws-sidebar">
       <RouterLink class="ws-brand" to="/workspace/datasets"
         ><span class="brand-symbol">AI</span>
