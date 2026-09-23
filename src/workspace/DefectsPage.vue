@@ -483,6 +483,7 @@ async function remove(item) {
     await ElMessageBox.confirm(`删除标准缺陷“${item.name}”？`, "删除确认", {
       confirmButtonText: "删除",
       cancelButtonText: "取消",
+      confirmButtonClass: "danger-confirm",
       type: "warning",
     });
   } catch {
@@ -507,6 +508,7 @@ async function deleteLabel(label, index) {
       {
         confirmButtonText: "确认删除",
         cancelButtonText: "取消",
+        confirmButtonClass: "danger-confirm",
         type: "warning",
       },
     );

@@ -932,6 +932,18 @@
 .workspace-active .el-message-box__message {
   font-size: 14px;
 }
+.workspace-active .el-message-box__btns .danger-confirm {
+  color: #fff;
+  border-color: #e35f59;
+  background: linear-gradient(135deg, #e85f58, #b9363b);
+  box-shadow: 0 0 16px rgba(224, 75, 76, .28);
+}
+.workspace-active .el-message-box__btns .danger-confirm:hover,
+.workspace-active .el-message-box__btns .danger-confirm:focus {
+  color: #fff;
+  border-color: #ff8b7e;
+  background: linear-gradient(135deg, #f27468, #c63b42);
+}
 
 /* Motion and depth help the operator read state changes at a glance. */
 .workspace-ui .ws-panel { position: relative; overflow: hidden; }

@@ -443,7 +443,7 @@ async function removeItem(item) {
     await ElMessageBox.confirm(
       `删除“${item.name}”及其中所有图片？删除后无法恢复。`,
       "删除数据集",
-      { type: "warning", confirmButtonText: "删除", cancelButtonText: "取消" },
+      { type: "warning", confirmButtonText: "删除", cancelButtonText: "取消", confirmButtonClass: "danger-confirm" },
     );
   } catch {
     return;

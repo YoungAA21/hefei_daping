@@ -551,7 +551,7 @@ async function remove(item, force = false) {
     await ElMessageBox.confirm(
       `删除“${item.name}”？关联图片或模型文件也可能被清理。`,
       "删除确认",
-      { type: "warning", confirmButtonText: "删除", cancelButtonText: "取消" },
+      { type: "warning", confirmButtonText: "删除", cancelButtonText: "取消", confirmButtonClass: "danger-confirm" },
     );
   } catch {
     return;
@@ -582,6 +582,7 @@ async function remove(item, force = false) {
             type: "warning",
             confirmButtonText: "强制删除",
             cancelButtonText: "取消",
+            confirmButtonClass: "danger-confirm",
           },
         );
         await forceDelete(item);

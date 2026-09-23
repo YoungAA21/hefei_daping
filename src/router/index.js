@@ -16,7 +16,7 @@ const router = createRouter({
                 { path: 'models', name: 'workspace-models', meta: { title: '模型管理' }, component: () => import('../workspace/ModelsPage.vue') },
                 { path: 'defects', name: 'workspace-defects', meta: { title: '标准缺陷' }, component: () => import('../workspace/DefectsPage.vue') },
                 { path: 'labels', name: 'workspace-labels', meta: { title: '打标缺陷' }, component: () => import('../workspace/DefectsPage.vue') },
-                { path: 'quality', name: 'workspace-quality', meta: { title: '质量分析' }, component: () => import('../workspace/QualityPage.vue') },
+                { path: 'quality', name: 'workspace-quality', meta: { title: '质量分析' }, component: () => import('../workspace/ValidationPage.vue') },
                 { path: 'images/:kind/:id', name: 'workspace-images', meta: { title: '图片工作台' }, component: () => import('../workspace/ImagesPage.vue') }
             ]
         },
