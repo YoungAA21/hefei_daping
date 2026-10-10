@@ -203,7 +203,7 @@ export default {
         const res = await getNgImageList({
           line,
           brand: this.defaultBrand,
-          point: this.resolvePointQueryValue(this.pointName),
+          point: this.resolvePointQueryValue(this.pointName, line),
           camera: this.defaultCamera,
           page: this.page,
           pageSize: this.pageSize

@@ -1,0 +1,15 @@
+src/workspace/api.js 827ms
+src/workspace/components/InsightChart.vue 381ms
+src/workspace/components/Pager.vue 23ms
+src/workspace/components/ResourceState.vue 10ms
+src/workspace/components/WorkspaceModal.vue 14ms
+src/workspace/DatasetsPage.vue 186ms
+src/workspace/DefectsPage.vue 178ms
+src/workspace/ImagesPage.vue 179ms
+src/workspace/ModelsPage.vue 123ms
+src/workspace/QualityPage.vue 51ms
+src/workspace/useResource.js 3ms
+src/workspace/workspace.scss 54ms
+src/workspace/WorkspaceLayout.vue 16ms
+tests/workspace-ui.mjs 28ms
+tests/workspace.test.mjs 13ms

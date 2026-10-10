@@ -1,0 +1,4 @@
+Browserslist: caniuse-lite is outdated. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+PASS: 7 workspace routes, pagination, create dataset, draw/save annotations, validation creation/results, API failure/retry, 1600/1280 layouts; no browser runtime errors.

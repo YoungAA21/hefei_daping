@@ -1,0 +1,222 @@
+
+> jifang@0.0.0 build
+> vite build
+
+vite v4.5.2 building for production...
+transforming...
+Browserslist: caniuse-lite is outdated. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+node_modules/mockjs/dist/mock.js (537:22) Use of eval in "node_modules/mockjs/dist/mock.js" is strongly discouraged as it poses security risks and may cause issues with minification.
+✓ 2184 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                           0.42 kB │ gzip:   0.33 kB
+dist/assets/iconfont-8a978eb7.woff2                       7.44 kB
+dist/assets/iconfont-ed643d94.woff                        8.66 kB
+dist/assets/iconfont-50d9ae52.ttf                        13.58 kB
+dist/assets/DIN-Bold-aa121f9b.otf                        28.64 kB
+dist/assets/topbg_0-6ec147f0.png                         39.93 kB
+dist/assets/topbg_42-6d936e07.png                        40.04 kB
+dist/assets/topbg_1-f793e39b.png                         40.25 kB
+dist/assets/topbg_55-4872d266.png                        40.54 kB
+dist/assets/topbg_53-51a3630f.png                        40.80 kB
+dist/assets/topbg_50-cdba08ed.png                        40.92 kB
+dist/assets/topbg_51-205124a5.png                        41.19 kB
+dist/assets/topbg_4-9533a4c8.png                         41.20 kB
+dist/assets/topbg_68-a638130c.png                        41.25 kB
+dist/assets/topbg_40-90cab473.png                        41.32 kB
+dist/assets/topbg_47-f53d0bf8.png                        41.39 kB
+dist/assets/topbg_56-f1fad2b4.png                        41.40 kB
+dist/assets/topbg_57-42a9fc91.png                        41.41 kB
+dist/assets/topbg_43-e8b68f67.png                        41.55 kB
+dist/assets/topbg_54-5c066b4a.png                        41.68 kB
+dist/assets/topbg_5-56611142.png                         41.69 kB
+dist/assets/topbg_44-7494b5f9.png                        41.77 kB
+dist/assets/topbg_2-0512e338.png                         41.78 kB
+dist/assets/topbg_52-71f69d7c.png                        41.85 kB
+dist/assets/topbg_58-4b0e3ab5.png                        41.86 kB
+dist/assets/topbg_69-924b8233.png                        41.87 kB
+dist/assets/topbg_39-3b56d933.png                        41.89 kB
+dist/assets/topbg_46-d7c02f99.png                        41.99 kB
+dist/assets/topbg_41-f9565fc0.png                        42.06 kB
+dist/assets/topbg_36-5319a224.png                        42.09 kB
+dist/assets/topbg_48-07e2de6e.png                        42.16 kB
+dist/assets/topbg_38-53c21593.png                        42.16 kB
+dist/assets/topbg_70-92291141.png                        42.23 kB
+dist/assets/topbg_27-b9777f0a.png                        42.29 kB
+dist/assets/topbg_17-efbdce6c.png                        42.31 kB
+dist/assets/topbg_37-b20dc899.png                        42.33 kB
+dist/assets/topbg_45-59cd1099.png                        42.38 kB
+dist/assets/topbg_49-ee4bf3d5.png                        42.40 kB
+dist/assets/topbg_15-1d15902b.png                        42.45 kB
+dist/assets/topbg_34-ed0a1ea5.png                        42.47 kB
+dist/assets/topbg_71-c73c62d2.png                        42.47 kB
+dist/assets/topbg_18-495df8e7.png                        42.52 kB
+dist/assets/topbg_74-f7f75bda.png                        42.55 kB
+dist/assets/topbg_6-9061fa5b.png                         42.56 kB
+dist/assets/topbg_25-df486d3f.png                        42.64 kB
+dist/assets/topbg_20-3125b69d.png                        42.77 kB
+dist/assets/topbg_66-822a5a21.png                        42.78 kB
+dist/assets/topbg_3-52ea51bc.png                         42.80 kB
+dist/assets/topbg_16-adf7c222.png                        42.89 kB
+dist/assets/topbg_13-5b2ca1d9.png                        42.91 kB
+dist/assets/topbg_67-32740ede.png                        42.96 kB
+dist/assets/topbg_72-87104f12.png                        42.99 kB
+dist/assets/topbg_12-6772ba02.png                        43.02 kB
+dist/assets/topbg_73-13cbc2d4.png                        43.19 kB
+dist/assets/topbg_60-48d10a3d.png                        43.20 kB
+dist/assets/topbg_10-f4e381f0.png                        43.28 kB
+dist/assets/topbg_21-9602f5ff.png                        43.34 kB
+dist/assets/topbg_22-6bb380a1.png                        43.35 kB
+dist/assets/topbg_64-32309cc8.png                        43.35 kB
+dist/assets/topbg_8-5ed87a20.png                         43.35 kB
+dist/assets/topbg_59-8da29352.png                        43.37 kB
+dist/assets/topbg_30-7347c6ff.png                        43.42 kB
+dist/assets/topbg_24-7d053610.png                        43.46 kB
+dist/assets/topbg_26-5f119425.png                        43.49 kB
+dist/assets/topbg_19-b4a31e84.png                        43.49 kB
+dist/assets/topbg_11-403aca01.png                        43.60 kB
+dist/assets/topbg_32-77f236ce.png                        43.62 kB
+dist/assets/topbg_7-783ba68a.png                         43.74 kB
+dist/assets/topbg_35-3c55e67c.png                        43.75 kB
+dist/assets/topbg_28-01e22e35.png                        43.80 kB
+dist/assets/topbg_33-6c984c89.png                        43.85 kB
+dist/assets/topbg_23-55a2d3d2.png                        44.01 kB
+dist/assets/topbg_31-2e9965c4.png                        44.08 kB
+dist/assets/topbg_61-c90b73dd.png                        44.12 kB
+dist/assets/topbg_62-4bd28c65.png                        44.22 kB
+dist/assets/topbg_65-eacc3ae0.png                        44.38 kB
+dist/assets/topbg_9-12008dfb.png                         44.42 kB
+dist/assets/topbg_29-f8b6c9b3.png                        44.55 kB
+dist/assets/topbg_14-612d2329.png                        44.67 kB
+dist/assets/topbg_63-b2b2e78c.png                        45.29 kB
+dist/assets/NG-ef3ee1e7.png                              78.57 kB
+dist/assets/work_time-54b31f28.png                       80.45 kB
+dist/assets/error_total-1fa00050.png                     90.59 kB
+dist/assets/total_pro-2e0ac334.png                      109.09 kB
+dist/assets/bg-c2ae91d8.png                             137.64 kB
+dist/assets/machine-4fe96162.png                        272.73 kB
+dist/assets/machine_stop-0a8b2e67.png                   274.87 kB
+dist/assets/machine_error-57430ecd.png                  275.38 kB
+dist/assets/AlibabaPuHuiTi-2-115-Black-abe59aa7.ttf   2,022.64 kB
+dist/assets/machine_detail-6d4857ef.png               3,374.70 kB
+dist/assets/back_img-1be439b7.png                     3,818.16 kB
+dist/assets/AlibabaPuHuiTi-2-85-Bold-95db198a.ttf     8,289.19 kB
+dist/assets/AlibabaPuHuiTi-2-55-Regular-a22ad467.ttf  8,449.68 kB
+dist/assets/QualityPage-8494d741.css                      0.50 kB │ gzip:   0.32 kB
+dist/assets/DefectsPage-d7c9ce8f.css                      0.73 kB │ gzip:   0.35 kB
+dist/assets/ImagesPage-052a8563.css                       2.98 kB │ gzip:   0.96 kB
+dist/assets/login-12c6f6ad.css                            7.51 kB │ gzip:   2.15 kB
+dist/assets/register-0b7f5c1c.css                         7.71 kB │ gzip:   2.20 kB
+dist/assets/WorkspaceLayout-8b3d3742.css                 13.70 kB │ gzip:   3.98 kB
+dist/assets/3DModel-6b28a74c.css                         16.09 kB │ gzip:   3.25 kB
+dist/assets/detail-cce5f571.css                          19.00 kB │ gzip:   4.56 kB
+dist/assets/home-563d9443.css                            22.30 kB │ gzip:   5.24 kB
+dist/assets/index-6e889625.css                           31.44 kB │ gzip:   6.93 kB
+dist/assets/index-c3f43340.css                          335.20 kB │ gzip:  48.30 kB
+dist/assets/topbg_2-d868076f.js                           0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_6-b9b3384b.js                           0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_4-e58624a9.js                           0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_7-0230c8c3.js                           0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_9-18733d50.js                           0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_1-6b32584b.js                           0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_5-b512f24b.js                           0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_3-b3e2ad79.js                           0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_8-fb553f49.js                           0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_0-41b65e8a.js                           0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_51-43645a6c.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_54-d31225ac.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_15-d7fbc5f7.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_50-197670ea.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_58-d2b736df.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_59-77b05d4e.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_47-a117e263.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_13-e2e131a1.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_22-49a136d2.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_12-f662b34f.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_24-c2e787f2.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_52-ac403ed6.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_69-3b14b688.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_45-ca74b899.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_44-fcbfa344.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_29-b0d39420.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_16-0f139942.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_40-b6cc5279.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_67-10a7798b.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_65-288ff4df.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_27-bbb1c411.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_31-f010dfa1.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_38-f32d5b8d.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_18-3b7116bc.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_60-d82144ba.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_68-a8557555.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_30-60902143.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_20-4c31fabd.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_55-b317803a.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_17-8d4e6d9b.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_10-b6dbb399.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_25-7b776224.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_35-38fff299.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_26-c7d91238.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_46-3455d371.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_39-fe684df9.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_43-3e7b6f07.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_41-2ef5e082.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_56-163a41d7.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_74-67e8b516.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_14-f038bdc0.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_57-94fd5e27.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_72-00495b1f.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_28-94810b8e.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_37-e4b59951.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_11-34b3f2a5.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_36-1676eb0b.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_23-c586cd83.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_48-01f26f9c.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_70-e9a4463b.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_34-c309a419.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_53-9fb87523.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_19-67a4b512.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_62-31ec42bc.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_73-64779500.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_21-7b2c8c3b.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_63-731586d1.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_61-e1d8b4d5.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_42-7b631ef1.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_64-4256ba45.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_66-a3fdf5f9.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_49-f985cf3e.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_32-f9cbe021.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_33-a8afeb58.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/topbg_71-6a63dd46.js                          0.06 kB │ gzip:   0.08 kB
+dist/assets/_plugin-vue_export-helper-c27b6911.js         0.09 kB │ gzip:   0.10 kB
+dist/assets/Auth-7a16fe86.js                              0.41 kB │ gzip:   0.24 kB
+dist/assets/lineMetrics-6d88c5e7.js                       0.77 kB │ gzip:   0.56 kB
+dist/assets/ResourceState-d57255ab.js                     1.06 kB │ gzip:   0.74 kB
+dist/assets/request-520da6ec.js                           1.44 kB │ gzip:   0.77 kB
+dist/assets/InsightChart-42b9bf79.js                      1.95 kB │ gzip:   1.17 kB
+dist/assets/WorkspaceModal-63088927.js                    1.98 kB │ gzip:   1.08 kB
+dist/assets/WorkspaceLayout-77a39cef.js                   2.74 kB │ gzip:   1.58 kB
+dist/assets/api-2479023a.js                               2.88 kB │ gzip:   1.71 kB
+dist/assets/login-6ea8ef31.js                             3.21 kB │ gzip:   1.64 kB
+dist/assets/register-71736453.js                          3.46 kB │ gzip:   1.72 kB
+dist/assets/QualityPage-d5db8e2a.js                       6.88 kB │ gzip:   3.43 kB
+dist/assets/DatasetsPage-4d072402.js                      8.09 kB │ gzip:   3.80 kB
+dist/assets/detail-8430ab93.js                            9.68 kB │ gzip:   4.13 kB
+dist/assets/DefectsPage-b88238a5.js                      11.17 kB │ gzip:   4.84 kB
+dist/assets/ImagesPage-506afa08.js                       13.46 kB │ gzip:   5.85 kB
+dist/assets/home-b5d2bc89.js                             14.52 kB │ gzip:   5.66 kB
+dist/assets/ModelsPage-f7c72a47.js                       15.63 kB │ gzip:   6.33 kB
+dist/assets/axios-a342f982.js                            29.78 kB │ gzip:  12.02 kB
+dist/assets/3DModel-560406ed.js                          32.78 kB │ gzip:   9.00 kB
+dist/assets/index-edfbf566.js                           101.28 kB │ gzip:  39.12 kB
+dist/assets/three.module-f9bb718c.js                    649.33 kB │ gzip: 167.05 kB
+dist/assets/index-21782bc0.js                         1,029.08 kB │ gzip: 342.02 kB
+dist/assets/index-28e845c9.js                         1,235.57 kB │ gzip: 378.38 kB
+
+(!) Some chunks are larger than 500 kBs after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 20.45s
