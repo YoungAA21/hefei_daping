@@ -40,7 +40,7 @@
       </div>
     </div>
     <div class="data">
-      <detailInsights :line-data="filteredList" :snapshot-at="snapshotAt" />
+      <detailInsights :line-data="filteredList" :line-id="receivedLineData?.line || currentLineData?.line" />
     </div>
     <pop ref="pop" :lineData="currentLineData" :point-name="currentPoint"></pop>
   </div>
@@ -59,7 +59,6 @@ export default {
     return {
       list: [],
       filteredList: [],
-      snapshotAt: null,
       isLineDataLoading: false,
       highlightTimer: null,
       dataInterval: null,
@@ -206,7 +205,6 @@ export default {
 
         this.list = formattedData;
         this.filteredList = this.filterLineData(formattedData);
-        this.snapshotAt = Date.now();
       } catch (error) {
         console.error('获取产线数据失败:', error);
       } finally {
@@ -294,7 +292,7 @@ export default {
   height: 100vh;
   position: relative;
   display: grid;
-  grid-template-rows: 100px minmax(0, 1fr) 25vh;
+  grid-template-rows: 100px minmax(0, 1fr) 30vh;
   background:
       radial-gradient(circle at 20% 18%, rgba(0, 226, 255, 0.2), transparent 28%),
       radial-gradient(circle at 80% 68%, rgba(255, 204, 102, 0.12), transparent 25%),

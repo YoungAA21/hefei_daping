@@ -14,6 +14,7 @@
 <!--    <div class="overview-section">-->
 <!--      <overData />-->
 <!--    </div>-->
+    <div class="main-stage">
     <div class="home">
       <div class="stage-orbit"></div>
       <div class="stage-light"></div>
@@ -52,8 +53,10 @@
         </div>
       </div>
     </div>
+      <lineDefectInsights @statistics-change="updateShiftStatistics" />
     <div class="data">
-      <productionInsights :line-data="list" />
+      <productionInsights :line-data="list" :score-rows="shiftScoreRows" :score-context="shiftScoreContext" />
+    </div>
     </div>
     <pop ref="pop" :lineData="currentMachineData" @close="onPopClose"></pop>
   </div>
@@ -65,6 +68,7 @@ import { logout } from "@/api/api/Auth.js";
 import { ElMessage } from 'element-plus'
 import top from "./components/top/index.vue";
 import productionInsights from "./components/productionInsights/index.vue";
+import lineDefectInsights from "./components/lineDefectInsights/index.vue";
 import pop from "@/components/pop/index.vue";
 import overData from "./components/overData/overData.vue"
 
@@ -77,6 +81,8 @@ export default {
   data() {
     return {
       list: [],
+      shiftScoreRows: Array.from({ length: 9 }, (_, i) => ({ name: `高${i + 1}`, value: null, note: '等待数据' })),
+      shiftScoreContext: '当前班次',
       highlightTimer: null,
       dataInterval: null, // 数据请求定时器
       isLineDataLoading: false,
@@ -106,6 +112,7 @@ export default {
   components: {
     top,
     productionInsights,
+    lineDefectInsights,
     pop,
     overData
   },
@@ -116,6 +123,10 @@ export default {
     this.clearDataInterval();
   },
   methods: {
+    updateShiftStatistics({ rows, context }) {
+      this.shiftScoreRows = rows;
+      this.shiftScoreContext = context;
+    },
     clearDataInterval() {
     // 清除所有定时器
       if (this.highlightTimer) {
@@ -847,5 +858,39 @@ export default {
   to {
     background-position: 44px 44px, 44px 44px, center;
   }
+}
+/* 设备在左侧保持三行三列，右侧独立展示班次统计。 */
+.main-stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320PX, 30%);
+  grid-template-rows: minmax(0, 1fr) 29vh;
+  gap: 18PX;
+  height: 93vh;
+  padding: 18PX 24PX 14PX;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 2;
+}
+.home { height: 100%; min-width: 0; min-height: 0; }
+.main-stage > .home { grid-column: 1; grid-row: 1; }
+.main-stage > .line-insights { grid-column: 2; grid-row: 1; }
+.main-stage > .data { grid-column: 1 / 3; grid-row: 2; height: 100%; padding: 0; min-width: 0; min-height: 0; }
+.stage-orbit { width: 92%; height: 65%; }
+.stage-light { width: 96%; }
+.depth-floor { width: 100%; height: 65%; }
+.machine-grid { width: 100%; transform: none; }
+.machine-row { width: 100%; min-height: 0; }
+.machine-item { min-width: 0; max-width: none; width: 33.333%; }
+.machine-item[class*='pos-'] { transform: rotateX(4deg); opacity: 1; }
+.machine-row:first-child .machine-item { transform: rotateX(4deg) scale(.86); }
+.machine-row:last-child .machine-item { transform: rotateX(4deg) scale(1.03); }
+.machine-content { width: 94%; }
+.machine-img-status { width: 100%; position: relative; }
+.machine-img-container { width: 100%; box-sizing: border-box; }
+.machine-img { width: 100%; height: clamp(90PX, 13vh, 160PX); }
+.machine-name { font-size: clamp(12PX, .9vw, 18PX); min-width: 90PX; }
+.fault-points { position: absolute; right: 0; top: 0; z-index: 3; max-height: 9vh; overflow-y: auto; padding: 5PX 8PX; font-size: 10PX; min-width: 70PX; max-width: 100PX; }
+@media (max-width: 1400PX) {
+  .main-stage { grid-template-columns: minmax(0, 1fr) minmax(310PX, 32%); gap: 10PX; padding: 12PX; }
 }
 </style>

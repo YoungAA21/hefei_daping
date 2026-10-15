@@ -1,11 +1,11 @@
 <template>
   <section class="detail-insights" aria-label="当前产线分析">
     <article class="panel quality-panel">
-      <header><span class="index">01</span><h2>产线质量概览</h2><span class="tag">QUALITY</span></header>
+      <header><span class="index">01</span><h2>机台评分与产量</h2><span class="tag">SCORE</span></header>
       <div class="quality-body">
-        <div class="gauge" :style="{ '--value': `${quality ?? 0}%` }" role="img" :aria-label="`合格率 ${qualityLabel}`">
+        <div class="gauge" :class="{ negative: score.value < 0 }" :style="{ '--value': `${Math.max(0, Math.min(100, score.value ?? 0))}%` }" role="img" :aria-label="score.insufficient ? '暂时未达到评分条件' : `机台评分 ${scoreLabel} 分`">
           <div class="ticks"></div><div class="arc"></div>
-          <div class="gauge-label"><span>当前合格率</span><strong>{{ qualityLabel }}<small v-if="quality !== null">%</small></strong><em>PASS RATE</em></div>
+          <div class="gauge-label"><span>机台评分</span><span v-if="score.insufficient" class="score-condition">暂时未达到评分条件</span><strong v-else>{{ scoreLabel }}<small v-if="score.value !== null">分</small></strong><em>SCORE</em></div>
         </div>
         <div class="totals">
           <div><span>累计产量</span><strong>{{ formatNumber(production) }}<small>件</small></strong></div>
@@ -13,7 +13,7 @@
           <div><span>剔除率</span><b>{{ quality === null ? '—' : (100 - quality).toFixed(2) + '%' }}</b></div>
         </div>
       </div>
-      <footer><span><i></i>{{ lineName }}</span><span>按当前累计产量计算</span></footer>
+      <footer><span><i></i>{{ lineName }}</span><span>班次产量 ≥ 1000 后评分</span></footer>
     </article>
     <article class="panel point-panel">
       <header><span class="index">02</span><h2>检测点运行状态</h2><span class="tag">POINTS</span></header>
@@ -28,51 +28,33 @@
       <div v-else class="empty">暂无检测点数据<span>等待当前产线接入</span></div>
       <footer><span><i></i>状态来自检测点反馈</span><span>5 秒刷新</span></footer>
     </article>
-    <article class="panel history-panel">
-      <header><span class="index">03</span><h2>产线实时采样</h2><span class="tag">LIVE RECORDS</span><span class="sample-count">{{ history.length }} / 10</span></header>
-      <div class="history-summary"><span>{{ lineName }}<em>最近 10 次采样</em></span><span><i></i>{{ snapshotAt ? `最近更新 ${timeLabel(snapshotAt)}` : '等待实时数据' }}</span></div>
-      <div class="table-wrap">
-        <table><thead><tr><th>采样时间</th><th>产量 / 件</th><th>剔除 / 件</th><th>合格率</th><th>检测状态</th></tr></thead>
-          <tbody><tr v-for="(sample, index) in history" :key="sample.at" :class="{ latest: index === 0 }"><td :title="new Date(sample.at).toLocaleString('zh-CN', { hour12: false })"><span v-if="index === 0" class="latest-dot"></span>{{ timeLabel(sample.at) }}</td><td>{{ formatNumber(sample.production) }}</td><td class="amber">{{ formatNumber(sample.rejected) }}</td><td>{{ sample.quality === null ? '—' : sample.quality.toFixed(2) + '%' }}</td><td :class="{ amber: sample.faults }">{{ sample.faults ? `${sample.faults} 点异常` : sample.unknown || !sample.points ? '状态未知' : '全部正常' }}</td></tr></tbody>
-        </table>
-        <div v-if="!history.length" class="empty">暂无采样记录<span>接口返回后自动更新</span></div>
-      </div>
-      <footer><span><i></i>最新记录置顶 · 悬停查看完整时间</span><span>本次页面访问期间的记录</span></footer>
-    </article>
+    <DetailShiftStatistics :line="line?.line || lineId" @statistics-change="shiftStatistics = $event" />
   </section>
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue';
+import { computed, ref } from 'vue';
+import DetailShiftStatistics from './DetailShiftStatistics.vue';
 import { count, formatNumber } from '../productionInsights/lineMetrics';
-const props = defineProps({ lineData: { type: Array, default: () => [] }, snapshotAt: { type: Number, default: null } });
+import { normalizeScore } from '../lineDefectInsights/scoreMetrics';
+const props = defineProps({ lineData: { type: Array, default: () => [] }, lineId: { type: String, default: '' } });
 const line = computed(() => props.lineData[0]);
 const lineName = computed(() => line.value?.line ? String(line.value.line).replace(/^gao(\d+)$/i, '高$1产线') : '当前产线未接入');
 const production = computed(() => count(line.value?.production));
 const rejected = computed(() => count(line.value?.rejectionrate));
 const quality = computed(() => production.value > 0 && rejected.value !== null && rejected.value <= production.value ? (1 - rejected.value / production.value) * 100 : null);
-const qualityLabel = computed(() => quality.value === null ? '—' : quality.value.toFixed(2));
+const shiftStatistics = ref(null);
+const score = computed(() => normalizeScore(shiftStatistics.value));
+const scoreLabel = computed(() => score.value.value === null ? '—' : score.value.value.toFixed(2));
 const points = computed(() => Array.isArray(line.value?.points) ? line.value.points : []);
 const normalCount = computed(() => points.value.filter(point => point.status === true).length);
 const faultCount = computed(() => points.value.filter(point => point.status === false).length);
 const unknownCount = computed(() => points.value.length - normalCount.value - faultCount.value);
 const pointStatus = point => point.status === true ? '运行正常' : point.status === false ? '检测异常' : '状态未知';
-const timeLabel = at => new Date(at).toLocaleTimeString('zh-CN', { hour12: false });
-const history = ref([]);
-const historyLine = ref(line.value?.line);
-watch(() => line.value?.line, name => {
-  if (name && name !== historyLine.value) { history.value = []; historyLine.value = name; }
-});
-// Record successful parent polls, including unchanged values, without a second API timer.
-watch(() => props.snapshotAt, at => {
-  if (!at || !line.value) return;
-  history.value = [{ at, production: production.value, rejected: rejected.value, quality: quality.value,
-    faults: faultCount.value, unknown: unknownCount.value, points: points.value.length }, ...history.value].slice(0, 10);
-}, { immediate: true });
 </script>
 
 <style scoped lang="scss">
-.detail-insights { display: grid; grid-template-columns: 1fr 1.05fr 1.8fr; gap: 14PX; height: 100%; min-height: 0; color: #d8eeff; --accent: #65e6ff; }
+.detail-insights { display: grid; grid-template-columns: .9fr 1fr 2fr; gap: 14PX; height: 100%; min-height: 0; color: #d8eeff; --accent: #65e6ff; }
 .panel { display: flex; flex-direction: column; position: relative; min-width: 0; min-height: 0; overflow: hidden; padding: 0 14PX; border: 1PX solid #65d5ff45; border-radius: 5PX; background: radial-gradient(ellipse at 10% 0%, #0e739d2b, transparent 60%), linear-gradient(145deg, #05192ef0, #030c1bf2); box-shadow: inset 0 1PX 0 #aae8ff14, 0 8PX 28PX #0004;
   &::before { content: ''; position: absolute; top: 0; left: 14PX; width: 66PX; height: 2PX; background: var(--accent); box-shadow: 0 0 14PX var(--accent); }
   &::after { content: ''; position: absolute; top: 0; right: 0; width: 38PX; height: 16PX; background: repeating-linear-gradient(130deg, transparent 0 4PX, #65d5ff22 4PX 6PX); pointer-events: none; }
@@ -92,6 +74,9 @@ footer i, .history-summary i, .latest-dot { display: inline-block; height: 5PX; 
 .gauge-label strong { color: #d7faff; font: clamp(19PX, 1.65vw, 34PX) DIN-Bold, monospace; text-shadow: 0 0 15PX #65e6ff66; }
 .gauge-label small { font: 10PX Arial, sans-serif; color: #65e6ff; }
 .gauge-label em { color: #50768e; font: 8PX Arial, sans-serif; letter-spacing: 2PX; }
+.gauge-label .score-condition { max-width: 70%; text-align: center; font-size: 10PX; line-height: 1.4; color: #c4b18a; }
+.gauge.negative .gauge-label strong, .gauge.negative .gauge-label small { color: #ff7588; }
+.gauge.negative .arc { background: #ff758833; }
 .totals { display: flex; flex-direction: column; gap: 10PX; min-width: 0; }
 .totals > div { display: flex; flex-direction: column; gap: 3PX; }
 .totals span { color: #8aa9be; font-size: 10PX; }

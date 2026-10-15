@@ -6,31 +6,19 @@
       <div class="plot"><MetricChart :rows="rows" /></div>
       <footer><span><i class="legend-dot"></i>各产线累计产量</span><span>单位：件</span></footer>
     </article>
-    <article class="insight-panel rejection-panel">
-      <header><span class="panel-index">02</span><h2>产线剔除对比</h2><span class="panel-tag">REJECTION</span></header>
-      <div class="metric-summary"><div><span>当前总剔除</span><strong>{{ formatNumber(totalRejected) }}</strong><small>件</small></div><span class="summary-note">{{ highestRejection }}</span></div>
-      <div class="plot"><MetricChart :rows="rows" kind="rejected" /></div>
-      <footer><span><i class="legend-dot"></i>各产线累计剔除数</span><span>单位：件</span></footer>
-    </article>
     <article class="insight-panel quality-panel">
-      <header><span class="panel-index">03</span><h2>产线质量与状态</h2><span class="panel-tag">QUALITY MONITOR</span></header>
+      <header><span class="panel-index">02</span><h2>产线剔除与质量状态</h2><span class="panel-tag">QUALITY</span></header>
+      <div class="metric-summary merged-summary"><div><span>总剔除</span><strong>{{ formatNumber(totalRejected) }}</strong><small>件</small></div><div><span>综合合格率</span><b>{{ qualityLabel }}{{ quality === null ? '' : '%' }}</b></div></div>
       <div class="quality-content">
-        <div class="quality-overview">
-          <div class="quality-gauge" :style="{ '--quality': `${quality ?? 0}%` }" role="img" :aria-label="`综合合格率 ${qualityLabel}`">
-            <div class="gauge-ticks"></div><div class="gauge-arc"></div>
-            <div class="gauge-value"><span>综合合格率</span><strong>{{ qualityLabel }}<small v-if="quality !== null">%</small></strong><em>PASS RATE</em></div>
-          </div>
-          <div class="connection-count"><i class="legend-dot"></i>已接入 <b>{{ connected }}</b><span>/ 9</span><em v-if="faults">异常 {{ faults }}</em></div>
-        </div>
-        <div class="line-matrix">
-          <div v-for="row in rows" :key="row.number" class="line-cell" :class="row.state" :title="`${row.name}产线 · ${row.status}\n产量：${formatNumber(row.production)} 件\n剔除：${formatNumber(row.rejected)} 件\n合格率：${row.quality === null ? '暂无有效产量' : row.quality.toFixed(2) + '%'}`">
-            <div class="cell-heading"><span>{{ row.name }}产线</span><span class="state-label"><i></i>{{ row.status }}</span></div>
-            <div class="cell-value"><strong>{{ row.quality === null ? '—' : row.quality.toFixed(2) }}<small v-if="row.quality !== null">%</small></strong><span>{{ row.quality === null ? '暂无有效产量' : '合格率' }}</span></div>
-            <div class="cell-track"><i :style="{ width: `${row.quality ?? 0}%` }"></i></div>
-          </div>
-        </div>
+        <RejectionQualityChart :rows="rows" />
       </div>
-      <footer><span><i class="legend-dot"></i>合格率按产量加权计算</span><span>状态依据检测点 · 5 秒刷新</span></footer>
+      <footer><span>剔除数 / 合格率 · 5 秒刷新</span><span>已接入 {{ connected }}/9 · 异常 {{ faults }}</span></footer>
+    </article>
+    <article class="insight-panel score-panel">
+      <header><span class="panel-index">03</span><h2>产线评分仪表盘</h2><span class="panel-tag">SCORE</span></header>
+      <div class="score-context">{{ scoreContext }}<span>单位：分</span></div>
+      <div class="plot"><ScoreGauges :rows="scoreRows" /></div>
+      <footer><span>刻度 0—100 · 保留实际负分</span><span>班次产量 ≥ 1000 后评分</span></footer>
     </article>
   </section>
 </template>
@@ -38,8 +26,10 @@
 <script setup>
 import { computed } from 'vue';
 import MetricChart from './MetricChart.vue';
+import RejectionQualityChart from './RejectionQualityChart.vue';
+import ScoreGauges from '../lineDefectInsights/ScoreGauges.vue';
 import { normalizeMetrics, formatNumber } from './lineMetrics';
-const props = defineProps({ lineData: { type: Array, default: () => [] } });
+const props = defineProps({ lineData: { type: Array, default: () => [] }, scoreRows: { type: Array, default: () => [] }, scoreContext: { type: String, default: '当前班次' } });
 const rows = computed(() => normalizeMetrics(props.lineData));
 const connected = computed(() => rows.value.filter(row => row.state !== 'missing').length);
 const faults = computed(() => rows.value.filter(row => row.state === 'fault').length);
@@ -52,16 +42,12 @@ const quality = computed(() => {
   return production > 0 ? (1 - valid.reduce((total, row) => total + row.rejected, 0) / production) * 100 : null;
 });
 const qualityLabel = computed(() => quality.value === null ? '—' : quality.value.toFixed(2));
-const highestRejection = computed(() => {
-  const ranked = rows.value.filter(row => row.rejected !== null).sort((a, b) => b.rejected - a.rejected);
-  return !ranked.length ? '等待数据接入' : ranked[0].rejected === 0 ? '当前无剔除' : `最高：${ranked[0].name}产线`;
-});
 </script>
 
 <style scoped lang="scss">
 .production-insights {
   --cyan: #65e6ff; --muted: #8aa9be;
-  display: grid; grid-template-columns: 1fr 1fr 1.75fr; gap: 14PX;
+  display: grid; grid-template-columns: 1fr 1.5fr 1.15fr; gap: 14PX;
   width: 100%; height: 100%; min-height: 0; color: #d8eeff;
 }
 .insight-panel {
@@ -119,4 +105,17 @@ footer { display: flex; align-items: center; justify-content: space-between; gap
 @media (max-width: 1400PX) { .panel-tag { display: none; } .quality-content { gap: 8PX; } .line-cell { padding: 4PX 6PX; } .cell-value > span { display: none; } .insight-panel { padding: 0 10PX; } }
 @media (max-height: 850PX) { header { height: 31PX; } .metric-summary { min-height: 33PX; } footer { height: 21PX; font-size: 9PX; } .quality-content { padding: 6PX 0; } .line-matrix { gap: 4PX; } .line-cell { padding-top: 2PX; padding-bottom: 2PX; } .cell-heading { font-size: 10PX; line-height: 1.1; } .cell-value { margin-top: 1PX; } .cell-value strong { font-size: 14PX; } .cell-track { margin-top: 2PX; height: 1PX; } }
 @media (prefers-reduced-motion: reduce) { .gauge-ticks { animation: none; } .cell-track i { transition: none; } }
+.merged-summary strong { color: #ffcc66; }
+.merged-summary b { color: #65e6ff; font: clamp(14PX, 1.1vw, 22PX) DIN-Bold, monospace; }
+.score-context { display: flex; justify-content: space-between; padding: 6PX 0; color: #8aa9be; font-size: 10PX; }
+.quality-panel .quality-content { padding-top: 0; }
+.quality-panel .cell-value > .pass-value { display: block; font: 10PX DIN-Bold, monospace; color: #b9d2e2; }
+@media (max-width: 1400PX) {
+  .production-insights { gap: 8PX; grid-template-columns: 1fr 1.5fr 1.15fr; }
+  .merged-summary { gap: 3PX; } .merged-summary > div { gap: 3PX; }
+  .output-panel .summary-note { display: none; }
+  .merged-summary span { font-size: 9PX; } .merged-summary strong { font-size: 18PX; }
+  .cell-heading { font-size: 9PX; } .state-label { font-size: 8PX; }
+  .quality-panel footer, .score-panel footer { font-size: 8PX; gap: 3PX; }
+}
 </style>

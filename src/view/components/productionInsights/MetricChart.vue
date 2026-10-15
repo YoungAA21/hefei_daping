@@ -34,7 +34,7 @@ function render() {
     },
     xAxis: { type: 'category', data: props.rows.map(row => row.name),
       axisLine: { lineStyle: { color: 'rgba(101,213,255,.2)' } }, axisTick: { show: false },
-      axisLabel: { color: '#93b4c9', fontSize: 11, interval: 0, margin: 9 } },
+      axisLabel: { color: '#93b4c9', fontSize: host.value.clientWidth < 300 ? 9 : 11, interval: 0, margin: 9 } },
     yAxis: { type: 'value', min: 0, minInterval: 1, splitNumber: small ? 2 : 3,
       max: values.every(value => !value) ? 1 : undefined,
       axisLabel: { color: '#688aa4', fontSize: 10, formatter: compactNumber },
