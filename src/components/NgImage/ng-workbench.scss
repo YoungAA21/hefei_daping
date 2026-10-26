@@ -33,3 +33,11 @@
 .row-content strong{white-space:normal;overflow-wrap:anywhere;line-height:1.4}
 .ng-zoom-panel>header>div{min-width:0;max-height:100%;overflow:auto;padding:6PX 0}
 .ng-zoom-panel h3{overflow-wrap:anywhere;font-size:15PX}
+
+.zoom-image-stage { display: grid; grid-template-columns: 42PX minmax(0, 1fr) 42PX; align-items: stretch; gap: 12PX; flex: 1; min-height: 0; }
+.image-step-button { align-self: center; width: 42PX; height: 72PX; border: 1PX solid #65d5ff66; border-radius: 6PX; background: #10334cdd; color: #bdefff; font: 36PX Arial, sans-serif; cursor: pointer; }
+.image-step-button:hover:not(:disabled) { border-color: #65e6ff; background: #185372; }
+.image-step-button:focus-visible { outline: 2PX solid #65e6ff; outline-offset: 3PX; }
+.image-step-button:disabled { opacity: .25; cursor: default; }
+.zoom-image-position { flex-shrink: 0; padding-top: 8PX; text-align: center; color: #85abc2; font-size: 11PX; }
+@media (max-width: 800px) { .zoom-image-stage { grid-template-columns: 30PX minmax(0, 1fr) 30PX; gap: 6PX; } .image-step-button { width: 30PX; height: 56PX; font-size: 28PX; } }

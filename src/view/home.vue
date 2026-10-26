@@ -30,6 +30,7 @@
 <script>
 import {getlineInfo} from "@/api/api/LargeScreenData.js";
 import { logout } from "@/api/api/Auth.js";
+import { isDemoMode, exitDemo } from '@/api/demoData';
 import { ElMessage } from 'element-plus'
 import top from "./components/top/index.vue";
 import productionInsights from "./components/productionInsights/index.vue";
@@ -182,6 +183,7 @@ export default {
       }
     },
     async handleLogout() {
+      if (isDemoMode()) { exitDemo(); return; }
       const token = localStorage.getItem('token') || localStorage.getItem('access_token');
 
       try {

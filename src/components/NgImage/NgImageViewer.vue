@@ -6,7 +6,7 @@
           <header class="ng-header">
             <div class="header-emblem"><span>NG</span></div>
             <div><span class="eyebrow">缺陷影像中心</span><h2>{{ pointName }}<span>缺陷图片工作台</span></h2></div>
-            <div class="header-context"><span class="status-dot"></span>{{ currentLineName }}产线 <i>/</i> CAMERA {{ defaultCamera }}</div>
+            <div class="header-context"><span class="status-dot"></span>{{ currentLineName }}产线 <i>/</i> {{ defaultCamera === '' ? '全部相机' : 'CAMERA ' + defaultCamera }}</div>
             <button class="icon-button" aria-label="关闭缺陷图片" @click="close">×</button>
           </header>
           <div class="ng-body">
@@ -28,12 +28,12 @@
               <div v-else-if="error && !images.length" class="empty-stage"><span>◇</span><strong>{{ error }}</strong><button class="action-button" @click="loadNgImages">重新加载</button></div>
               <NgImageComparison v-else :image="selectedImage" />
               <div class="preview-navigation"><button class="text-button" :disabled="selectedIndex <= 0" @click="moveSelection(-1)">← 上一张</button><span><b>{{ selectedIndex < 0 ? '—' : String(selectedIndex + 1).padStart(2,'0') }}</b> / {{ visibleImages.length }}</span><button class="text-button" :disabled="selectedIndex < 0 || selectedIndex >= visibleImages.length-1" @click="moveSelection(1)">下一张 →</button><button class="action-button" :disabled="!(selectedImage?.imageUrl || selectedImage?.detectedImageUrl)" @click="openImagePreview(selectedImage)">⛶ 放大检视</button></div>
-              <div class="image-metadata"><div><span>{{ selectedImage?.detectedAt ? '检测时间' : '采集时间' }}</span><strong>{{ formatTime(selectedImage?.createTime) }}</strong></div><div><span>产品品牌</span><strong>{{ selectedImage?.brand || defaultBrand }}</strong></div><div><span>检测相机</span><strong>CAM {{ selectedImage?.camera ?? defaultCamera }}</strong></div></div>
+              <div class="image-metadata"><div><span>{{ selectedImage?.detectedAt ? '检测时间' : '采集时间' }}</span><strong>{{ formatTime(selectedImage?.createTime) }}</strong></div><div><span>产品品牌</span><strong>{{ selectedImage?.brand || defaultBrand }}</strong></div><div><span>检测相机</span><strong>{{ cameraLabel(selectedImage?.camera ?? defaultCamera) }}</strong></div></div>
               <div class="inspection-note"><i></i>原图与检测结果对照<span>缩放后可滚动查看图像细节</span></div>
             </main>
             <aside class="catalog-column">
               <div class="section-label"><span>03 / 缺陷档案</span><em>{{ number(totalCount) }} 条</em></div>
-              <div class="ng-filter-bar"><label><span>产品品牌</span><select v-model="defaultBrand" :disabled="loading" @change="handleFilterChange"><option v-for="brand in brandOptions" :key="brand" :value="brand">{{ brand }}</option></select></label><label><span>检测相机</span><select v-model="defaultCamera" :disabled="loading" @change="handleFilterChange"><option v-for="camera in cameraOptions" :key="camera" :value="camera">CAM {{ camera }}</option></select></label><button aria-label="刷新缺陷列表" :disabled="loading" @click="loadNgImages">↻</button></div>
+              <div class="ng-filter-bar"><label><span>产品品牌</span><select v-model="defaultBrand" :disabled="loading" @change="handleFilterChange"><option v-for="brand in brandOptions" :key="brand" :value="brand">{{ brand }}</option></select></label><label><span>检测相机</span><select v-model="defaultCamera" :disabled="loading" @change="handleFilterChange"><option value="">全部相机</option><option v-for="camera in cameraOptions" :key="camera" :value="camera">CAM {{ camera }}</option></select></label><button aria-label="刷新缺陷列表" :disabled="loading" @click="loadNgImages">↻</button></div>
               <div class="catalog-summary"><span>{{ defectFilter || '全部缺陷' }} · 本页 {{ visibleImages.length }} 张</span><button v-if="defectFilter" @click="filterDefect(defectFilter)">清除筛选 ×</button><span v-else>按记录时间倒序</span></div>
               <div class="ng-list">
                 <div v-if="loading" class="skeleton-list"><div v-for="n in 6" :key="n" class="skeleton-row"></div></div>
@@ -44,7 +44,7 @@
           </div>
           <footer class="ng-footer"><span><i></i>缺陷影像追溯 · {{ currentLineName }} / {{ pointName }}</span><span>ESC 关闭窗口</span></footer>
         </section>
-        <Transition name="zoom"><div v-if="zoomImage" class="ng-zoom-mask" role="dialog" aria-modal="true" aria-label="缺陷图片放大检视" @click.self="closeImagePreview"><section class="ng-zoom-panel"><header><div><span class="eyebrow">IMAGE DETAIL</span><h3>{{ zoomImage.defect || '其他' }} · 原图 / 检测图对照</h3></div><button class="icon-button" aria-label="关闭放大检视" @click="closeImagePreview">×</button></header><NgImageComparison :image="zoomImage" enlarged/><footer><span>{{ zoomImage.name }}</span><span>{{ zoomImage.line || currentLineName }} · {{ zoomImage.brand || defaultBrand }} · CAM {{ zoomImage.camera ?? defaultCamera }} · {{ formatTime(zoomImage.createTime) }}</span></footer></section></div></Transition>
+        <Transition name="zoom"><div v-if="zoomImage" class="ng-zoom-mask" role="dialog" aria-modal="true" aria-label="缺陷图片放大检视" @click.self="closeImagePreview"><section class="ng-zoom-panel"><header><div><span class="eyebrow">IMAGE DETAIL</span><h3>{{ zoomImage.defect || '其他' }} · 原图 / 检测图对照</h3></div><button class="icon-button" aria-label="关闭放大检视" @click="closeImagePreview">×</button></header><div class="zoom-image-stage"><button type="button" class="image-step-button" aria-label="上一张缺陷图片" title="上一张（←）" :disabled="loading || selectedIndex <= 0" @click="moveSelection(-1)">‹</button><NgImageComparison :image="zoomImage" enlarged/><button type="button" class="image-step-button" aria-label="下一张缺陷图片" title="下一张（→）" :disabled="loading || selectedIndex < 0 || selectedIndex >= visibleImages.length - 1" @click="moveSelection(1)">›</button></div><div class="zoom-image-position" role="status" aria-live="polite">本页第 {{ selectedIndex + 1 }} / {{ visibleImages.length }} 张 · ← → 切换图片</div><footer><span>{{ zoomImage.name }}</span><span>{{ zoomImage.line || currentLineName }} · {{ zoomImage.brand || defaultBrand }} · {{ cameraLabel(zoomImage.camera ?? defaultCamera) }} · {{ formatTime(zoomImage.createTime) }}</span></footer></section></div></Transition>
       </div>
     </Transition>
   </Teleport>
@@ -82,7 +82,7 @@ export default {
       requestVersion: 0,
       totalCount: 0,
       defaultBrand: '黄山(金皖烟)',
-      defaultCamera: '0',
+      defaultCamera: '',
       brandOptions: ['黄山(金皖烟)', '黄山(新制皖烟)'],
       cameraOptions: ['0', '1', '2', '3'],
     }
@@ -121,11 +121,20 @@ export default {
   },
   beforeUnmount() { this.requestVersion++; },
   methods: {
+    cameraLabel(value) { return value == null || String(value).trim() === '' ? '未标注相机' : `CAM ${value}`; },
     number(value) { const number = Number(value); return value === null || value === undefined || !Number.isFinite(number) ? '—' : number.toLocaleString('zh-CN'); },
     filterDefect(name) { this.defectFilter = this.defectFilter === name ? '' : name; this.selectedImage = this.visibleImages[0] || null; },
-    moveSelection(step) { const image = this.visibleImages[this.selectedIndex + step]; if (image) this.selectImage(image); },
+    moveSelection(step) {
+      if (this.loading || this.selectedIndex < 0) return;
+      const image = this.visibleImages[this.selectedIndex + step];
+      if (!image) return;
+      const focused = typeof document === 'undefined' ? null : document.activeElement;
+      this.selectImage(image);
+      this.$nextTick(() => { if (focused?.disabled && this.zoomImage) this.$refs.dialog?.querySelector('.ng-zoom-panel .icon-button')?.focus(); });
+    },
     changePage(step) { const next = this.page + step; if (this.loading || next < 1 || next > this.pageCount) return; this.page = next; this.loadNgImages(); },
     handleKeys(event) {
+      if (['ArrowLeft', 'ArrowRight'].includes(event.key) && !event.altKey && !event.ctrlKey && !event.metaKey && !event.target?.closest?.('input, select, textarea, [contenteditable="true"]')) { event.preventDefault(); event.stopPropagation(); this.moveSelection(event.key === 'ArrowLeft' ? -1 : 1); }
       if (event.key === 'Escape') { event.stopPropagation(); this.zoomImage ? this.closeImagePreview() : this.close(); }
       if (event.key === 'Tab') {
         const container = this.$refs.dialog?.querySelector(this.zoomImage ? '.ng-zoom-panel' : '.ng-panel');
@@ -150,6 +159,7 @@ export default {
     resolvePointQueryValue,
     selectImage(image) {
       this.selectedImage = image;
+      if (this.zoomImage) this.zoomImage = image;
     },
     openImagePreview(image) {
       this.selectedImage = image;
@@ -176,6 +186,7 @@ export default {
       this.loadNgImages();
     },
     async open() {
+      this.defaultCamera = '';
       this.show = true;
       this.totalCount = 0;
       this.page = 1;

@@ -65,6 +65,7 @@
           <span>{{ loading ? '登录中...' : '进入系统' }}</span>
         </button>
       </form>
+      <router-link class="demo-entry" to="/?demo=1">进入演示 · 无需连接服务器</router-link>
 
       <div class="switch-line">
         <span>还没有账号？</span>
@@ -492,4 +493,8 @@ export default {
 @keyframes buttonSweep {
   45%, 100% { transform: translateX(120%); }
 }
+</style>
+
+<style scoped>
+.demo-entry { display: block; margin-top: 18PX; padding: 10PX; text-align: center; border: 1PX solid #65d5ff55; border-radius: 4PX; color: #8fe7ff; font-size: 13PX; text-decoration: none; background: #12344a66; }
 </style>

@@ -1,4 +1,5 @@
 import {createRouter, createWebHashHistory} from 'vue-router'
+import { isDemoMode, enableDemo } from '../api/demoData';
 
 const routerHistory = createWebHashHistory();
 const router = createRouter({
@@ -40,6 +41,8 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
+    if (to.path === '/' && to.query.demo === '1') enableDemo();
+    if (isDemoMode() && ['/', '/detail', '/3DModel'].includes(to.path)) { next(); return; }
     const token = localStorage.getItem('token') || localStorage.getItem('access_token')
 
     if (to.meta.requiresAuth && !token) {
